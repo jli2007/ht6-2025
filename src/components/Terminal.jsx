@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import photoshopController from "../controllers/PhotoshopController";
 import "./Terminal.css";
+import { Chroma } from "./chroma";
 
 // --- UXP File System API ---
 // We need to import the storage module AND the formats enum from UXP
@@ -11,6 +12,7 @@ export const Terminal = () => {
   console.log('Terminal component rendering...');
 
   const [cssCode, setCssCode] = useState(`#layer1 {
+<<<<<<< HEAD
   blur: 0px;
   opacity: 1.0;
   hue-shift: 0deg;
@@ -38,12 +40,21 @@ export const Terminal = () => {
     'drop-shadow', 'inner-shadow', 'outer-glow', 'stroke', 'color-overlay', 
     'gradient-overlay', 'blur', 'sharpen', 'noise', 'grain', 'vignette'
   ];
+=======
+  blur: 10;
+  opacity: 80;
+  hue: 25;
+  brightness: 25;
+  }`);
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
 
   const [isConnected, setIsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
   const textareaRef = useRef(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [text, setText] = useState("");
 
   // Add log function
   const addLog = (message, type = "info") => {
@@ -52,6 +63,33 @@ export const Terminal = () => {
       { message, type, timestamp: new Date().toLocaleTimeString() },
     ]);
   };
+
+  useEffect(() => {
+    // Listen for log events from the controller
+    const handleLog = (logData) => {
+      addLog(logData.message, logData.type);
+    };
+
+    const handleConnectionChange = (data) => {
+      setIsConnected(data.connected);
+      addLog(
+        data.connected
+          ? "Connected to Photoshop via UXP"
+          : "Lost connection to Photoshop",
+        data.connected ? "success" : "error"
+      );
+    };
+
+    // Register event listeners
+    photoshopController.on("log", handleLog);
+    photoshopController.on("connectionChanged", handleConnectionChange);
+
+    // Cleanup listeners on unmount
+    return () => {
+      photoshopController.off("log", handleLog);
+      photoshopController.off("connectionChanged", handleConnectionChange);
+    };
+  }, []);
 
   // Parse CSS to extract layer styles
   const parseCSSToLayers = (css) => {
@@ -93,9 +131,16 @@ export const Terminal = () => {
 
   const handleSave = async () => {
     addLog("Parsing CSS...", "info");
+<<<<<<< HEAD
+=======
+    const layers = parseCSSToLayers(cssCode);
+    addLog(`Found ${Object.keys(layers).length} layers to process`, "info");
+
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
     try {
       console.log("CSS to apply:", cssCode);
       const result = await photoshopController.applyCSSOperations(cssCode);
+<<<<<<< HEAD
       console.log("Apply result:", result);
       addLog(`✅ Applied ${result.operationsCount} ops`, "success");
     } catch (err) {
@@ -426,15 +471,20 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
 
   
+=======
+      console.log(result);
+      // Don't add additional logs here since the controller now handles all logging
+    } catch (err) {
+      // This should rarely happen now since controller catches most errors
+      addLog(`Unexpected error: ${err.message}`, "error");
+    }
+  };
+
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
   const connectToPhotoshop = async () => {
+    addLog("Attempting to connect to Photoshop...", "info");
     const connected = await photoshopController.checkPhotoshopConnection();
-    setIsConnected(connected);
-    addLog(
-      connected
-        ? "Connected to Photoshop via UXP"
-        : "Failed to connect. Open a document!",
-      connected ? "success" : "error"
-    );
+    // Connection change will be handled by the event listener
   };
 
   const handleExport = () => {
@@ -479,6 +529,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
   return (
     <div className="css-editor">
+<<<<<<< HEAD
       {/* Export Modal */}
       {showExportModal && (
         <div className="css-editor__modal-backdrop" onClick={() => setShowExportModal(false)}>
@@ -499,6 +550,15 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         <div className="css-editor__header-left">
           <span className="css-editor__icon css-editor__icon--blue">📁</span>
           <h1 className="css-editor__title">CSS to Photoshop</h1>
+=======
+      <div className="css-editor__header">
+        <div className="css-editor__header-left">
+          <img
+            src={Chroma}
+            alt="logo"
+            style={{ width: "15vw", height: "auto" }}
+          />
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
         </div>
         <div className="css-editor__header-right">
           <div className={`css-editor__status ${isConnected ? "css-editor__status--connected" : "css-editor__status--disconnected"}`}>
@@ -513,6 +573,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* AI Generation Sections */}
       <div className="css-editor__ai-section">
         <div className="css-editor__ai-header">
@@ -574,10 +635,26 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
               🎨 {isAnalyzingImage ? "Analyzing..." : "Extract Style & Generate CSS"}
             </button>
           </div>
+=======
+          <button
+            onClick={handleSave}
+            className="css-editor__button css-editor__button--green"
+          >
+            <Save className="css-editor__button-icon" />
+            Save (Ctrl+S)
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="css-editor__button css-editor__button--purple"
+          >
+            <Play className="css-editor__button-icon" />
+            Run
+          </button>
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
         </div>
       </div>
 
-      {/* Main content */}
       <div className="css-editor__main">
         <div className="css-editor__editor">
           <div className="css-editor__editor-header">
@@ -585,7 +662,37 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
             <span className="css-editor__editor-filename">styles.css</span>
           </div>
           <div className="css-editor__editor-content">
+<<<<<<< HEAD
             <textarea ref={textareaRef} value={cssCode} onChange={(e) => setCssCode(e.target.value)} className="css-editor__textarea" placeholder="Enter your CSS styles here..." spellCheck={false} />
+=======
+            <div className="textarea-container" style={{ position: 'relative', height: '100%' }}>
+              <textarea
+                id="codeTextarea"
+                ref={textareaRef}
+                value={cssCode}
+                onChange={(e) => setCssCode(e.target.value)}
+                className="code-textarea"
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  padding: '20px',
+                  paddingLeft: '60px',
+                  resize: 'none',
+                  tabSize: 2,
+                  caretColor: '#d4d4d4',
+                  zIndex: 2
+                }}
+                placeholder="Enter your CSS styles here..."
+                spellCheck={false}
+              />
+            </div>
+>>>>>>> 808b84216e675c87f111444558274842b8247d84
           </div>
         </div>
         <div className="css-editor__logs">
