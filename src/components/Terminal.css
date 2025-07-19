@@ -220,3 +220,30 @@
   font-size: 0.75rem;
   color: #9ca3af;
 }
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  height: 100vh;
+  width: 100vw;
+}
+
+.copy-button {
+  display: block;
+  margin: 43px 25px 400px 1050px; 
+  padding: 0.3rem 0.3rem;
+  font-size: 1rem;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.5s, box-shadow 0.5s, backdrop-filter 0.5s;
+}
+.copy-button:hover {
+  background: rgba(255,255,255,0.2);
+  box-shadow: 0 0 16px 8px rgba(255,255,255,0.4);
+  backdrop-filter: blur(3px);
+}

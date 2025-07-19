@@ -17,6 +17,8 @@ export const Terminal = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const textareaRef = useRef(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const [text, setText] = useState('');
 
   // Add log function
   const addLog = (message, type = "info") => {
@@ -159,9 +161,21 @@ export const Terminal = () => {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="css-editor__main">
-        {/* Editor */}
+      <div className="container">
+        <aside className="sidebar">
+          <div className="image-textarea-wrapper">
+            <img src="/src/assets/border.png" alt="Border" className="border-image" />
+            <TextEditor value={text} onChange={setText} />
+            <button className="copy-button" onClick={handleCopy}>
+              <img src="/src/assets/clipboard.png" alt="clipboard icon" style={{width: '32px', height: '32px'}} />
+            </button>
+          </div>
+          <Clipboard show={showPopup} onClose={() => setShowPopup(false)} />
+        </aside>
+      </div>
+
+  <div className="css-editor__main">
+    {/* 
         <div className="css-editor__editor">
           <div className="css-editor__editor-header">
             <Code2 className="css-editor__icon css-editor__icon--gray" />
@@ -178,7 +192,7 @@ export const Terminal = () => {
               spellCheck={false}
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Logs panel */}
         <div className="css-editor__logs">
