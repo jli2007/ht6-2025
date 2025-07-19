@@ -22,6 +22,6 @@
 }
 
 .css-logo{
-    width: 15vw;
-    height: auto;
+    width: 15vw !important;
+    height: auto !important;
 }

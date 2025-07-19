@@ -160,7 +160,7 @@ export const Terminal = () => {
           </button>
         </div>
       </div>
-
+{/* 
       <div className="container">
         <aside className="sidebar">
           <div className="image-textarea-wrapper">
@@ -172,10 +172,10 @@ export const Terminal = () => {
           </div>
           <Clipboard show={showPopup} onClose={() => setShowPopup(false)} />
         </aside>
-      </div>
+      </div> */}
 
   <div className="css-editor__main">
-    {/* 
+    
         <div className="css-editor__editor">
           <div className="css-editor__editor-header">
             <Code2 className="css-editor__icon css-editor__icon--gray" />
@@ -192,7 +192,7 @@ export const Terminal = () => {
               spellCheck={false}
             />
           </div>
-        </div> */}
+        </div>
 
         {/* Logs panel */}
         <div className="css-editor__logs">
