@@ -1,12 +1,11 @@
 import React from "react";
-
-import { ColorPicker } from "../components/ColorPicker.jsx";
+import { WC } from "../components/WC.jsx";
 import { Terminal } from "../components//Terminal.jsx";
 
 export const Demos = () => {
-    return (
-        <>
-            <Terminal />
-        </>
-    )
-} 
+  return (
+      <WC>
+        <Terminal />
+      </WC>
+  );
+};
