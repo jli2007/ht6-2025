@@ -5,7 +5,6 @@ import { PanelController } from "./controllers/PanelController.jsx";
 import { CommandController } from "./controllers/CommandController.jsx";
 import { About } from "./components/About.jsx";
 import { Demos } from "./panels/Demos.jsx";
-import { MoreDemos } from "./panels/MoreDemos.jsx";
 
 import { entrypoints } from "uxp";
 
@@ -14,17 +13,14 @@ const demosController =  new PanelController(() => <Demos/>, {id: "demos", menuI
     { id: "reload1", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload() },
     { id: "dialog1", label: "About this Plugin", enabled: true, checked: false, oninvoke: () => aboutController.run() },
 ] });
-const moreDemosController =  new PanelController(() => <MoreDemos/>, { id: "moreDemos", menuItems: [
-    { id: "reload2", label: "Reload Plugin", enabled: true, checked: false, oninvoke: () => location.reload() }
-] });
 
 entrypoints.setup({
     plugin: {
         create(plugin) {
-            /* optional */ console.log("created", plugin);
+           console.log("created", plugin);
         },
         destroy() {
-            /* optional */ console.log("destroyed");
+           console.log("destroyed");
         }
     },
     commands: {
@@ -32,6 +28,5 @@ entrypoints.setup({
     },
     panels: {
         demos: demosController,
-        moreDemos: moreDemosController
     }
 });
