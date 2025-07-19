@@ -1,0 +1,149 @@
+.image-analyzer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.analyzer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.analyzer-header h3 {
+    margin: 0;
+    color: #212529;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.image-input-section {
+    padding: 20px;
+    background: #ffffff;
+}
+
+.input-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.file-upload {
+    display: flex;
+    align-items: center;
+}
+
+.url-input {
+    flex: 1;
+}
+
+.url-input sp-textfield {
+    width: 100%;
+}
+
+.image-preview {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.analysis-result {
+    padding: 20px;
+    background: #ffffff;
+    border-top: 1px solid #e9ecef;
+}
+
+.analysis-result h4 {
+    margin: 0 0 12px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.generated-css {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 16px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #495057;
+    white-space: pre-wrap;
+    overflow-x: auto;
+}
+
+.analyzer-help {
+    padding: 20px;
+    background: #ffffff;
+    border-top: 1px solid #e9ecef;
+}
+
+.analyzer-help h4 {
+    margin: 0 0 12px 0;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.analyzer-help ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.analyzer-help li {
+    margin: 8px 0;
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.analyzer-help strong {
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .analyzer-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    
+    .input-methods {
+        flex-direction: column;
+    }
+    
+    .image-actions {
+        flex-direction: column;
+    }
+} 
