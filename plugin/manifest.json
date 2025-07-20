@@ -12,6 +12,7 @@
   ],
   "requiredPermissions": {
     "allowCodeGenerationFromStrings": true,
+    "localFileSystem": "fullAccess",
     "launchProcess": {
       "schemes": [
         "http",
@@ -20,6 +21,12 @@
       "extensions": [
         ".svg",
         ".png"
+      ]
+    },
+    "network": {
+      "domains": [
+        "https://generativelanguage.googleapis.com",
+        "https://*.googleapis.com"
       ]
     },
     "webview": {

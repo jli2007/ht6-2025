@@ -436,11 +436,10 @@ class PhotoshopController {
         contrast: clamp(value, -100, 100),
       }),
       exposure: () => ({
-        type: "exposure",
+        type: "brightnessContrast", // Use brightness/contrast as fallback for exposure
         layerName,
-        hue: 0,
-        saturation: clamp(value, -100, 100),
-        lightness: 0,
+        brightness: clamp(value, -100, 100),
+        contrast: 0,
       }),
       'hue-shift': () => ({
         type: "hueSaturation",
@@ -455,14 +454,18 @@ class PhotoshopController {
         value: clamp(value, -100, 100),
       }),
       temperature: () => ({
-        type: "temperature",
+        type: "hueSaturation", // Use hue/saturation as fallback for temperature
         layerName,
-        value: clamp(value, -100, 100),
+        hue: clamp(value * 0.5, -90, 90), // Convert temperature to hue shift
+        saturation: 0,
+        lightness: 0,
       }),
       tint: () => ({
-        type: "tint",
+        type: "hueSaturation", // Use hue/saturation as fallback for tint
         layerName,
-        value: clamp(value, -100, 100),
+        hue: clamp(value * 0.5, -90, 90), // Convert tint to hue shift
+        saturation: 0,
+        lightness: 0,
       }),
 
       // Layer Effects
@@ -519,9 +522,10 @@ class PhotoshopController {
         value: clamp(value, 0, 100),
       }),
       vignette: () => ({
-        type: "vignette",
+        type: "brightnessContrast", // Use brightness/contrast as fallback for vignette
         layerName,
-        value: clamp(value, 0, 100),
+        brightness: -clamp(value * 0.3, 0, 30), // Simulate vignette with brightness
+        contrast: clamp(value * 0.2, 0, 20),
       }),
 
       // Legacy support for old property names
@@ -591,7 +595,7 @@ class PhotoshopController {
   /**
    * Apply CSS operations to Photoshop
    */
-  async applyCSSOperations(cssText) {
+  async applyCSSOperations(cssText, vibeMode = false) {
     console.log("Parsing CSS text:", cssText);
     const operations = this.parseCSSToOperations(cssText);
     if (!operations.length) {
@@ -626,8 +630,10 @@ class PhotoshopController {
                 this.emit("log", { message: `Created new layer: ${layerName}`, type: "info" });
               }
 
-              // Reset previous adjustments for this layer
-              await this.resetLayerAdjustments(doc, layerName);
+              // Reset previous adjustments for this layer only if not in vibe mode
+              if (!vibeMode) {
+                await this.resetLayerAdjustments(doc, layerName);
+              }
 
               // Track applied adjustment layer IDs for this layer
               const appliedIds = [];
@@ -714,23 +720,8 @@ class PhotoshopController {
                       break;
 
                     case "exposure":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "exposure",
-                            exposure: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const expAdjLayer = doc.activeLayer;
-                      appliedIds.push(expAdjLayer.id);
-                      await expAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied exposure to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Exposure is now handled as brightness/contrast
+                      this.emit("log", { message: `⚠️ Exposure converted to brightness adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "vibrance":
@@ -754,43 +745,13 @@ class PhotoshopController {
                       break;
 
                     case "temperature":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "temperature",
-                            temperature: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const tempAdjLayer = doc.activeLayer;
-                      appliedIds.push(tempAdjLayer.id);
-                      await tempAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied temperature to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Temperature is now handled as hue/saturation
+                      this.emit("log", { message: `⚠️ Temperature converted to hue adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "tint":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "tint",
-                            tint: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const tintAdjLayer = doc.activeLayer;
-                      appliedIds.push(tintAdjLayer.id);
-                      await tintAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied tint to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Tint is now handled as hue/saturation
+                      this.emit("log", { message: `⚠️ Tint converted to hue adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "gaussianBlur":
