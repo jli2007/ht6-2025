@@ -6,7 +6,7 @@ import "./About.css";
 export const About = (props) => {
     return (
         <form method="dialog" className="aboutDialog">
-            <sp-heading>Chroma – Style Transfer Plugin</sp-heading>
+            <sp-heading>Chroma</sp-heading>
             <sp-divider size="large" />
 
             <sp-body>
