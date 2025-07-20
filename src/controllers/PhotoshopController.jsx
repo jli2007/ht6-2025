@@ -228,15 +228,25 @@ class PhotoshopController {
   parsePropertyValue(value) {
     // Handle different value types
     if (typeof value === "string") {
-      // Handle opacity values (0.0 to 1.0)
+      // Handle percentage values
       if (value.includes("%")) {
+        return parseFloat(value);
+      }
+
+      // Handle pixel values (e.g., "0.3px", "2px")
+      if (value.includes("px")) {
+        return parseFloat(value);
+      }
+
+      // Handle degree values (e.g., "45deg")
+      if (value.includes("deg")) {
         return parseFloat(value);
       }
 
       const numericValue = parseFloat(value);
       if (!isNaN(numericValue)) {
-        // If it's a decimal between 0-1, convert to percentage
-        if (numericValue >= 0 && numericValue <= 1) {
+        // If it's a decimal between 0-1 and no units, convert to percentage
+        if (numericValue >= 0 && numericValue <= 1 && !value.includes("px") && !value.includes("deg")) {
           return numericValue * 100; // Convert 0.1 to 10
         }
         return numericValue;
