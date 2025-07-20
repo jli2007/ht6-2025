@@ -292,44 +292,10 @@ npm run uxp:debug
 
 Check console output in UXP Developer Tools for detailed error information.
 
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** with proper documentation
-4. **Test thoroughly** in Photoshop
-5. **Commit your changes**: `git commit -m 'Add amazing feature'`
-6. **Push to branch**: `git push origin feature/amazing-feature`
-7. **Open a Pull Request**
-
-### Development Guidelines
-- Follow existing code style and conventions
-- Add comprehensive error handling
-- Include console logging for debugging
-- Test with various Photoshop versions
-- Update documentation for new features
 
 ## 📄 License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- **Adobe UXP Team** for the excellent platform
-- **Google Gemini** for AI-powered style analysis
-- **React Community** for the amazing ecosystem
-- **CodeMirror** for the professional code editor
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/chroma-photoshop-plugin/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/chroma-photoshop-plugin/discussions)
-- **Documentation**: [Wiki](https://github.com/your-username/chroma-photoshop-plugin/wiki)
-
----
-
-**Made with ❤️ for the Photoshop community**
 
 *Chroma • CSS for Photoshop™ - Where AI meets creativity*
