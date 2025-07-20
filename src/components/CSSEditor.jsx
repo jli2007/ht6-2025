@@ -1,9 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import './CSSEditor.css';
-import '../utils/csslint.js';
+import React, { useEffect, useRef, useState } from "react";
+import "./CSSEditor.css";
+import "../utils/csslint.js";
 
 // CSS Editor with CSSLint integration
-const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here..." }) => {
+const CSSEditor = ({
+  value,
+  onChange,
+  placeholder = "enter your CSS styles here...",
+}) => {
   const textareaRef = useRef(null);
   const [errorCount, setErrorCount] = useState(0);
   const [warningCount, setWarningCount] = useState(0);
@@ -31,7 +35,7 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
       setWarningCount(results.stats.warnings);
       setLintMessages(results.messages);
     } catch (error) {
-      console.error('CSSLint validation failed:', error);
+      console.error("CSSLint validation failed:", error);
       setErrorCount(0);
       setWarningCount(0);
       setLintMessages([]);
@@ -47,55 +51,56 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
 
   // Initial validation on mount
   useEffect(() => {
-    validateCSS(value || '');
+    validateCSS(value || "");
   }, [value]);
 
   // Update textarea value when prop changes
   useEffect(() => {
     if (textareaRef.current && textareaRef.current.value !== value) {
-      textareaRef.current.value = value || '';
+      textareaRef.current.value = value || "";
     }
   }, [value]);
 
   return (
     <div className="css-editor-container">
       <div className="css-editor-header">
-        <div className="css-editor-title">
-        </div>
         <div className="css-editor-status">
           {errorCount > 0 && (
-            <span className="css-editor-error-count">❌ {errorCount} errors</span>
+            <span className="css-editor-error-count">
+              {" "}
+              • {errorCount} errors—invalid CSS
+            </span>
           )}
           {warningCount > 0 && (
-            <span className="css-editor-warning-count">⚠️ {warningCount} warnings</span>
+            <span className="css-editor-warning-count">
+              {" "}
+              • {warningCount} warnings on CSS
+            </span>
           )}
           {errorCount === 0 && warningCount === 0 && (
-            <span className="css-editor-success">✅ Valid CSS</span>
+            <span className="css-editor-success"> • valid CSS</span>
           )}
         </div>
       </div>
-      
+
       <div className="css-editor-main">
         <textarea
           ref={textareaRef}
-          value={value || ''}
+          value={value || ""}
           onChange={handleChange}
           placeholder={placeholder}
+          className="css-editor-textarea"
           style={{
-            width: '100%',
-            height: '250px',
-            backgroundColor: '#1e1e1e',
-            color: '#cccccc',
-            border: 'none',
-            padding: '1rem',
+            height: "500px",
+            backgroundColor: "#1e1e1e",
+            color: "#cccccc",
             fontFamily: '"Courier New", Courier, monospace',
-            fontSize: '14px',
-            lineHeight: '20px',
-            resize: 'vertical',
-            outline: 'none'
+            resize: "vertical",
+            outline: "none",
+            overflow: "auto",
           }}
         />
-        
+
         {/* Lint Messages Panel */}
         {lintMessages.length > 0 && (
           <div className="css-editor-lint-panel">
@@ -105,13 +110,13 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
             </div>
             <div className="css-editor-lint-messages">
               {lintMessages.map((message, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`css-editor-lint-message css-editor-lint-message--${message.type}`}
                   onClick={() => {
                     // Scroll to the line with the error
                     if (textareaRef.current) {
-                      const lines = value.split('\n');
+                      const lines = value.split("\n");
                       const lineHeight = 20; // Approximate line height
                       const scrollTop = (message.line - 1) * lineHeight;
                       textareaRef.current.scrollTop = scrollTop;
@@ -119,8 +124,12 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
                     }
                   }}
                 >
-                  <span className="css-editor-lint-line">Line {message.line}:</span>
-                  <span className="css-editor-lint-text">{message.message}</span>
+                  <span className="css-editor-lint-line">
+                    Line {message.line}:
+                  </span>
+                  <span className="css-editor-lint-text">
+                    {message.message}
+                  </span>
                 </div>
               ))}
             </div>
@@ -131,4 +140,4 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
   );
 };
 
-export default CSSEditor; 
+export default CSSEditor;
