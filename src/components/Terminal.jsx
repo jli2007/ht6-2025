@@ -478,7 +478,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
   });
 
   // Removed connectToPhotoshop function - no longer needed
-  const handleExport = () => {
+  const handleExport = async () => {
     const layers = parseCSSToLayers(cssCode);
     const firstLayerName = Object.keys(layers)[0];
     if (!firstLayerName) {
@@ -523,18 +523,29 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
       " "
     )};\n  opacity: ${opacity};\n}`;
 
-    // Create and download the CSS file
-    const blob = new Blob([finalCss], { type: "text/css" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `chroma-styles-${Date.now()}.css`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      // Use UXP file system API for proper file saving
+      const fileName = `chroma-styles-${Date.now()}.css`;
+      
+      // Get file for saving using UXP file system
+      const file = await localFileSystem.getFileForSaving(fileName, {
+        types: ["css"]
+      });
+      
+      if (!file) {
+        addLog("Export cancelled by user.", "info");
+        return;
+      }
 
-    addLog("📦 CSS file downloaded successfully", "success");
+      // Write the CSS content to the file
+      await file.write(finalCss, { format: formats.utf8 });
+      
+      addLog(`📦 CSS file saved successfully: ${file.name}`, "success");
+      addLog(`📍 Location: ${file.nativePath}`, "info");
+    } catch (error) {
+      console.error("Export error:", error);
+      addLog(`Export failed: ${error.message}`, "error");
+    }
   };
 
   const copyConsoleToClipboard = () => {
@@ -573,10 +584,10 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
             </div>
             <div className="css-editor__editor-buttons">
               <button onClick={handleClearLayers} className="css-editor__button css-editor__button--red">
-                🧹 Clear Layers
+                🧹Clear
               </button>
               <button onClick={handleSave} className="css-editor__button css-editor__button--green">
-                💾 Save (Ctrl+S)
+                💾 Save
               </button>
             </div>
           </div>
@@ -655,7 +666,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
                   color: "#9ca3af",
                   cursor: "pointer",
                   transition: "all 0.15s ease",
-                  minHeight: imagePreview ? "140px" : "80px",
+                  height: "80px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
