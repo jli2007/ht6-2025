@@ -410,117 +410,73 @@ class PhotoshopController {
   /**
    * Reset layer to original state by removing adjustment layers and effects
    */
-  async resetLayerAdjustments(doc, layerName) {
-    const adjustmentKey = `${doc.id}_${layerName}`;
-    const appliedAdjustments = this.appliedAdjustments.get(adjustmentKey) || [];
+  /**
+ * Reset layer to original state by removing adjustment layers and effects.
+ */
+async resetLayerAdjustments(doc, layerName) {
+  const adjustmentKey = `${doc.id}_${layerName}`;
+  const targetLayer = this.findLayerByName(doc, layerName);
 
-    // Find the target layer first to make sure we don't delete it
-    const targetLayer = this.findLayerByName(doc, layerName);
-    const targetLayerId = targetLayer ? targetLayer.id : null;
-
-    // Remove previously created adjustment layers
-    for (const adjustmentId of appliedAdjustments) {
-      try {
-        // Safety check: don't delete the target layer itself!
-        if (adjustmentId === targetLayerId) {
-          console.warn(
-            `Skipping deletion of target layer ${layerName} (ID: ${adjustmentId})`
-          );
-          continue;
-        }
-
-        const adjLayer = doc.layers.find((l) => l.id === adjustmentId);
-        if (adjLayer && adjLayer.kind === "adjustmentLayer") {
-          console.log(
-            `Deleting adjustment layer: ${adjLayer.name} (ID: ${adjustmentId})`
-          );
-          await adjLayer.delete();
-        } else if (adjLayer) {
-          console.warn(
-            `Layer ${adjLayer.name} is not an adjustment layer, skipping deletion`
-          );
-        }
-      } catch (e) {
-        console.warn("Failed to remove adjustment layer:", e);
-      }
-    }
-
-    // Enhanced cleanup: Remove any untracked adjustment layers and Smart Filters that might be affecting this layer
-    try {
-      // Get all adjustment layers in the document
-      const allAdjustmentLayers = doc.layers.filter(layer => layer.kind === "adjustmentLayer");
-      
-      for (const adjLayer of allAdjustmentLayers) {
-        // Skip if this is the target layer itself
-        if (adjLayer.id === targetLayerId) {
-          continue;
-        }
-        
-        // Check if this adjustment layer is positioned above our target layer
-        // and might be affecting it (this is a heuristic approach)
-        const targetLayerIndex = doc.layers.indexOf(targetLayer);
-        const adjLayerIndex = doc.layers.indexOf(adjLayer);
-        
-        // If adjustment layer is above target layer, it might be affecting it
-        if (adjLayerIndex < targetLayerIndex) {
-          console.log(
-            `Removing untracked adjustment layer: ${adjLayer.name} (ID: ${adjLayer.id})`
-          );
-          try {
-            await adjLayer.delete();
-          } catch (e) {
-            console.warn(`Failed to remove untracked adjustment layer ${adjLayer.name}:`, e);
-          }
-        }
-      }
-
-      // Also clear Smart Filters from the target layer specifically using filterFX
-      if (targetLayer && (targetLayer.isSmartObject || targetLayer.kind === "smartObject")) {
-        try {
-          console.log(`Clearing Smart Filters from target layer: ${layerName} using filterFX`);
-          
-          // Select the target layer first
-          doc.activeLayer = targetLayer;
-          
-          // Clear Smart Filters using filterFX delete command
-          // Wrap in try-catch to suppress error dialogs but still attempt clearing
-          try {
-            await action.batchPlay([
-              {
-                _obj: "delete",
-                _target: [
-                  {
-                    _ref: "filterFX"
-                  }
-                ],
-                _options: {
-                  dialogOptions: "dontDisplay"
-                }
-              }
-            ], { synchronousExecution: false });
-            
-            console.log(`Cleared Smart Filters from layer: ${layerName}`);
-          } catch (batchPlayError) {
-            // Silently handle the "filter effects not available" error
-            // This prevents the error dialog from showing
-            if (batchPlayError.number === 9 || batchPlayError.number === 8007 || 
-                batchPlayError.message.includes("not currently available")) {
-              console.log(`Layer ${layerName} has no Smart Filters to clear`);
-            } else {
-              console.warn(`Failed to clear Smart Filters from layer ${layerName}:`, batchPlayError);
-            }
-          }
-        } catch (e) {
-          console.warn(`Failed to process layer ${layerName}:`, e);
-        }
-      }
-    } catch (e) {
-      console.warn("Error during enhanced cleanup:", e);
-    }
-
-    // Clear the tracking
-    this.appliedAdjustments.delete(adjustmentKey);
+  if (!targetLayer) {
+      console.warn(`Could not find layer: ${layerName}`);
+      return;
   }
+
+  // --- 1. Remove Tracked Adjustment Layers ---
+  const appliedAdjustments = this.appliedAdjustments.get(adjustmentKey) || [];
+  for (const adjId of appliedAdjustments) {
+      if (adjId === targetLayer.id) continue; // Safety check
+      try {
+          const adjLayer = doc.layers.find((l) => l.id === adjId);
+          if (adjLayer) {
+              await adjLayer.delete();
+          }
+      } catch (e) {
+          // Fails silently if layer is already gone
+      }
+  }
+
+  // --- 2. Remove ANY Adjustment Layer Above the Target ---
+  // This is a good general cleanup step.
+  const targetLayerIndex = doc.layers.indexOf(targetLayer);
+  const adjustmentsAbove = doc.layers.filter(l =>
+      l.kind === "adjustmentLayer" && doc.layers.indexOf(l) < targetLayerIndex
+  );
+
+  for (const adjLayer of adjustmentsAbove) {
+      try {
+          console.log(`Removing untracked adjustment layer: ${adjLayer.name}`);
+          await adjLayer.delete();
+      } catch (e) {
+          console.warn(`Failed to remove untracked adjustment: ${adjLayer.name}`, e);
+      }
+  }
+
+  // --- 3. Clear Smart Filters (Your Corrected Logic) ---
+  if (targetLayer.isSmartObject) {
+      // Check if filters exist before trying to delete them
+      if (targetLayer.smartFilters && targetLayer.smartFilters.length > 0) {
+          console.log(`Clearing ${targetLayer.smartFilters.length} Smart Filters from: ${layerName}`);
+          try {
+              doc.activeLayer = targetLayer; // Set the active layer for batchPlay
+              await action.batchPlay([
+                  {
+                      _obj: "delete",
+                      _target: [{ _ref: "filterFX" }],
+                      _options: { dialogOptions: "dontDisplay" }
+                  }
+              ], {});
+          } catch (e) {
+              console.warn(`An error occurred while clearing Smart Filters for ${layerName}:`, e);
+          }
+      } else {
+          console.log(`Layer ${layerName} has no Smart Filters to clear. Skipping.`);
+      }
+  }
+
+  // --- 4. Clear Tracking ---
+  this.appliedAdjustments.delete(adjustmentKey);
+}
 
   /**
    * Clear all adjustment layers and smart filters for a fresh start
