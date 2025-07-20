@@ -172,6 +172,9 @@
 .css-editor__logs-header {
     padding: 0.75rem;
     border-bottom: 1px solid #374151;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .css-editor__logs-title {
@@ -245,6 +248,8 @@
 .css-editor__icon--purple {
   color: #a855f7;
 }
+
+
 
 .css-editor__ai-content {
   display: flex;
