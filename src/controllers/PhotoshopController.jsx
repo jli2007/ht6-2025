@@ -436,11 +436,10 @@ class PhotoshopController {
         contrast: clamp(value, -100, 100),
       }),
       exposure: () => ({
-        type: "exposure",
+        type: "brightnessContrast", // Use brightness/contrast as fallback for exposure
         layerName,
-        hue: 0,
-        saturation: clamp(value, -100, 100),
-        lightness: 0,
+        brightness: clamp(value, -100, 100),
+        contrast: 0,
       }),
       'hue-shift': () => ({
         type: "hueSaturation",
@@ -449,20 +448,31 @@ class PhotoshopController {
         saturation: 0,
         lightness: 0,
       }),
+      saturation: () => ({
+        type: "hueSaturation",
+        layerName,
+        hue: 0,
+        saturation: clamp(value, -100, 100),
+        lightness: 0,
+      }),
       vibrance: () => ({
         type: "vibrance",
         layerName,
         value: clamp(value, -100, 100),
       }),
       temperature: () => ({
-        type: "temperature",
+        type: "hueSaturation", // Use hue/saturation as fallback for temperature
         layerName,
-        value: clamp(value, -100, 100),
+        hue: clamp(value * 0.5, -90, 90), // Convert temperature to hue shift
+        saturation: 0,
+        lightness: 0,
       }),
       tint: () => ({
-        type: "tint",
+        type: "hueSaturation", // Use hue/saturation as fallback for tint
         layerName,
-        value: clamp(value, -100, 100),
+        hue: clamp(value * 0.5, -90, 90), // Convert tint to hue shift
+        saturation: 0,
+        lightness: 0,
       }),
 
       // Layer Effects
@@ -519,9 +529,10 @@ class PhotoshopController {
         value: clamp(value, 0, 100),
       }),
       vignette: () => ({
-        type: "vignette",
+        type: "brightnessContrast", // Use brightness/contrast as fallback for vignette
         layerName,
-        value: clamp(value, 0, 100),
+        brightness: -clamp(value * 0.3, 0, 30), // Simulate vignette with brightness
+        contrast: clamp(value * 0.2, 0, 20),
       }),
 
       // Legacy support for old property names
@@ -591,7 +602,7 @@ class PhotoshopController {
   /**
    * Apply CSS operations to Photoshop
    */
-  async applyCSSOperations(cssText) {
+  async applyCSSOperations(cssText, vibeMode = false) {
     console.log("Parsing CSS text:", cssText);
     const operations = this.parseCSSToOperations(cssText);
     if (!operations.length) {
@@ -626,8 +637,10 @@ class PhotoshopController {
                 this.emit("log", { message: `Created new layer: ${layerName}`, type: "info" });
               }
 
-              // Reset previous adjustments for this layer
-              await this.resetLayerAdjustments(doc, layerName);
+              // Reset previous adjustments for this layer only if not in vibe mode
+              if (!vibeMode) {
+                await this.resetLayerAdjustments(doc, layerName);
+              }
 
               // Track applied adjustment layer IDs for this layer
               const appliedIds = [];
@@ -714,23 +727,8 @@ class PhotoshopController {
                       break;
 
                     case "exposure":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "exposure",
-                            exposure: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const expAdjLayer = doc.activeLayer;
-                      appliedIds.push(expAdjLayer.id);
-                      await expAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied exposure to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Exposure is now handled as brightness/contrast
+                      this.emit("log", { message: `⚠️ Exposure converted to brightness adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "vibrance":
@@ -754,43 +752,13 @@ class PhotoshopController {
                       break;
 
                     case "temperature":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "temperature",
-                            temperature: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const tempAdjLayer = doc.activeLayer;
-                      appliedIds.push(tempAdjLayer.id);
-                      await tempAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied temperature to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Temperature is now handled as hue/saturation
+                      this.emit("log", { message: `⚠️ Temperature converted to hue adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "tint":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "tint",
-                            tint: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      const tintAdjLayer = doc.activeLayer;
-                      appliedIds.push(tintAdjLayer.id);
-                      await tintAdjLayer.move(targetLayer, "placeBefore");
-                      
-                      this.emit("log", { message: `✓ Applied tint to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Tint is now handled as hue/saturation
+                      this.emit("log", { message: `⚠️ Tint converted to hue adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     case "gaussianBlur":
@@ -810,112 +778,27 @@ class PhotoshopController {
                       break;
 
                     case "dropShadow":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "dropShadow",
-                            color: op.color,
-                            x: op.x,
-                            y: op.y,
-                            blur: op.blur,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied drop shadow to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Drop shadow not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "innerShadow":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "innerShadow",
-                            color: op.color,
-                            x: op.x,
-                            y: op.y,
-                            blur: op.blur,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied inner shadow to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Inner shadow not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "outerGlow":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "outerGlow",
-                            color: op.color,
-                            size: op.size,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied outer glow to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Outer glow not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "stroke":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "stroke",
-                            size: op.size,
-                            position: op.position,
-                            color: op.color,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied stroke to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Stroke not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "colorOverlay":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "colorOverlay",
-                            color: op.color,
-                            opacity: op.opacity,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied color overlay to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Color overlay not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "gradientOverlay":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "gradientOverlay",
-                            type: op.type,
-                            angle: op.angle,
-                            color1: op.color1,
-                            color2: op.color2,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied gradient overlay to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      this.emit("log", { message: `⚠️ Gradient overlay not supported for ${layerName}`, type: "warning" });
                       break;
 
                     case "sharpen":
@@ -951,19 +834,8 @@ class PhotoshopController {
                       break;
 
                     case "vignette":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "vignette",
-                            amount: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-                      
-                      this.emit("log", { message: `✓ Applied vignette to ${layerName}`, type: "success" });
-                      successfulOperations++;
+                      // Vignette is now handled as brightness/contrast
+                      this.emit("log", { message: `⚠️ Vignette converted to brightness/contrast adjustment for ${layerName}`, type: "warning" });
                       break;
 
                     default:
@@ -1093,6 +965,50 @@ class PhotoshopController {
       }, { commandName: "Clear All CSS Adjustments" });
     } catch (e) {
       console.error("Error clearing adjustments:", e);
+      throw e;
+    }
+  }
+
+  /**
+   * Clear all smart filters from the current layer
+   */
+  async clearAllSmartFilters() {
+    try {
+      await core.executeAsModal(async () => {
+        const doc = app.activeDocument;
+        if (!doc || !doc.activeLayer) {
+          throw new Error("No active layer found");
+        }
+
+        const layer = doc.activeLayer;
+        
+        // Simple approach: just clear any adjustment layers above the current layer
+        const layerIndex = doc.layers.indexOf(layer);
+        if (layerIndex > 0) {
+          // Check layers above the current layer for adjustment layers
+          for (let i = layerIndex - 1; i >= 0; i--) {
+            const aboveLayer = doc.layers[i];
+            try {
+              // Check if it's an adjustment layer or has adjustment-like properties
+              if (aboveLayer.kind === "adjustmentLayer" || 
+                  aboveLayer.name.includes("Brightness/Contrast") ||
+                  aboveLayer.name.includes("Hue/Saturation") ||
+                  aboveLayer.name.includes("Add Noise") ||
+                  aboveLayer.name.includes("Gaussian Blur") ||
+                  aboveLayer.name.includes("Vibrance") ||
+                  aboveLayer.name.includes("Exposure")) {
+                await aboveLayer.delete();
+              }
+            } catch (e) {
+              console.warn("Failed to remove adjustment layer:", e);
+              // Continue with other layers
+            }
+          }
+        }
+        
+      }, { commandName: "Clear All Smart Filters" });
+    } catch (e) {
+      console.error("Error clearing smart filters:", e);
       throw e;
     }
   }
