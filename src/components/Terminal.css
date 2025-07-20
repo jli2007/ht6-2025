@@ -109,15 +109,6 @@
   overflow: hidden;
 }
 
-.css-editor__editor-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  background-color: #2d3748;
-  border-bottom: 1px solid #374151;
-}
-
 .css-editor__editor-title {
   display: flex;
   align-items: center;
@@ -129,11 +120,12 @@
 
 .css-editor__editor-buttons {
     display: flex;
-    gap: 0.5rem;
+    align-items: end;
 }
 
 .css-editor__editor-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     padding: 0.5rem 1rem;
     background-color: #1f2937;
@@ -180,7 +172,7 @@
 }
 
 .css-editor__logs-header {
-  padding: 0.75rem;
+  padding: 0.5rem 1rem;
   border-bottom: 1px solid #374151;
   display: flex;
   align-items: center;
@@ -256,9 +248,8 @@
 
 .css-editor__ai-input-group {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
-  width: 100%;
 }
 
 .css-editor__text-input {
@@ -266,10 +257,6 @@
   padding: 0.5rem;
   color: white;
   font-size: 0.875rem;
-  background-color: #374151;
-  border: 1px solid #4b5563;
-  border-radius: 0.25rem;
-  min-width: 0;
 }
 
 .css-editor__text-input:focus {
@@ -298,25 +285,9 @@
   width: 100%;
 }
 
-.css-editor__image-upload {
+.css-editor__upload-button{
   flex: 1;
-  min-width: 0;
-}
-
-.css-editor__extract-button {
-  flex-shrink: 0;
-}
-
-.css-editor__ai-input-group .css-editor__button,
-.css-editor__extract-button .css-editor__button {
-  width: 140px;
-  white-space: nowrap;
-}
-
-/* Ensure both input areas have consistent spacing */
-.css-editor__ai-input-group,
-.css-editor__image-upload-row {
-  gap: 8px;
+  padding: 0.5rem;
 }
 
 .css-editor__image-preview {

@@ -71,7 +71,7 @@ export const Terminal = () => {
   // Helper function to update CSS (always replace)
   const updateCssCode = (newCss) => {
     setCssCode(newCss);
-    addLog("✨ Replaced CSS with new styles", "success");
+    addLog("✨ replaced CSS with new styles", "success");
   };
 
   useEffect(() => {
@@ -112,12 +112,12 @@ export const Terminal = () => {
 
   // Initialize component safely
   useEffect(() => {
-    addLog("Plugin loaded successfully", "success");
+    addLog("plugin loaded successfully", "success");
   }, []);
 
   const handleSave = async () => {
-    addLog("🧹 Clearing previous layers...", "info");
-    addLog("Parsing CSS...", "info");
+    addLog("🧹 clearing previous layers...", "info");
+    addLog("parsing CSS...", "info");
     try {
       console.log("CSS to apply:", cssCode);
       const result = await photoshopController.applyCSSOperations(
@@ -125,21 +125,21 @@ export const Terminal = () => {
         false
       ); // Always use normal mode
       console.log("Apply result:", result);
-      addLog(`✅ Applied ${result.operationsCount} ops`, "success");
+      addLog(`✅ applied ${result.operationsCount} ops`, "success");
     } catch (err) {
       console.error("Save error:", err);
-      addLog(`Error: ${err.message || "Unknown error occurred"}`, "error");
+      addLog(`error: ${err.message || "unknown error occurred"}`, "error");
     }
   };
 
   const handleClearLayers = async () => {
-    addLog("🧹 Clearing all adjustment layers...", "info");
+    addLog("🧹 clearing all adjustment layers...", "info");
     try {
       await photoshopController.clearAllAdjustmentLayers();
-      addLog("✅ All adjustment layers cleared", "success");
+      addLog("✅ all adjustment layers cleared", "success");
     } catch (err) {
       console.error("Clear layers error:", err);
-      addLog(`Error: ${err.message || 'Unknown error occurred'}`, "error");
+      addLog(`error: ${err.message || "unknown error occurred"}`, "error");
     }
   };
 
@@ -151,11 +151,11 @@ export const Terminal = () => {
         allowMultiple: false,
       });
       if (!imageFile) {
-        addLog("No image selected.", "warning");
+        addLog("no image selected.", "warning");
         return;
       }
 
-      addLog(`📸 Selected image: ${imageFile.name}`, "info");
+      addLog(`📸 selected image: ${imageFile.name}`, "info");
 
       const buffer = await imageFile.read({ format: formats.binary });
 
@@ -195,7 +195,7 @@ export const Terminal = () => {
       });
     } catch (error) {
       console.error("File selection error:", error);
-      addLog(`Error selecting image: ${error.message}`, "error");
+      addLog(`error selecting image: ${error.message}`, "error");
     }
   };
 
@@ -204,7 +204,7 @@ export const Terminal = () => {
     (apiFunction) =>
     async (...args) => {
       if (isApiRateLimited) {
-        addLog("Rate limit active. Please wait a few seconds.", "warning");
+        addLog("rate limit active. please wait a few seconds.", "warning");
         return;
       }
       setIsApiRateLimited(true);
@@ -215,7 +215,7 @@ export const Terminal = () => {
   // Generate CSS from inspiration image
   const handleGenerateFromImage = withApiDebounce(async () => {
     if (!inspirationImage) {
-      addLog("Please upload an inspiration image first", "error");
+      addLog("please upload an inspiration image first", "error");
       return;
     }
 
@@ -226,16 +226,16 @@ export const Terminal = () => {
     }
 
     setIsAnalyzingImage(true);
-    addLog(`Analyzing ${inspirationImage.name}...`, "info");
+    addLog(`analyzing ${inspirationImage.name}...`, "info");
 
     try {
       const currentLayerName = await photoshopController.getCurrentLayerName();
       if (!currentLayerName) {
-        addLog("No active layer found. Please select a layer.", "error");
+        addLog("no active layer found. please select a layer.", "error");
         setIsAnalyzingImage(false);
         return;
       }
-      addLog(`Targeting layer: #${currentLayerName}`, "info");
+      addLog(`targeting layer: #${currentLayerName}`, "info");
 
       const apiKey = process.env.GEMINI_API_KEY;
       const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -305,7 +305,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
       }
     } catch (error) {
       console.error("Image analysis error:", error);
-      addLog(`Error analyzing image: ${error.message}`, "error");
+      addLog(`error analyzing image: ${error.message}`, "error");
     } finally {
       setIsAnalyzingImage(false);
     }
@@ -313,7 +313,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
   const handleGenerateFromText = withApiDebounce(async () => {
     if (!prompt.trim()) {
-      addLog("Please enter a description", "error");
+      addLog("please enter a description", "error");
       return;
     }
 
@@ -325,16 +325,16 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     }
 
     setIsGenerating(true);
-    addLog("Generating CSS with Gemini...", "info");
+    addLog("generating CSS with Gemini...", "info");
 
     try {
       const currentLayerName = await photoshopController.getCurrentLayerName();
       if (!currentLayerName) {
-        addLog("No active layer found. Please select a layer.", "error");
+        addLog("no active layer found. please select a layer.", "error");
         setIsGenerating(false);
         return;
       }
-      addLog(`Targeting layer: #${currentLayerName}`, "info");
+      addLog(`targeting layer: #${currentLayerName}`, "info");
 
       const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
@@ -471,7 +471,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
       }
     } catch (error) {
       console.error("Text generation error:", error);
-      addLog(`Error generating CSS: ${error.message}`, "error");
+      addLog(`error generating CSS: ${error.message}`, "error");
     } finally {
       setIsGenerating(false);
     }
@@ -482,7 +482,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     const layers = parseCSSToLayers(cssCode);
     const firstLayerName = Object.keys(layers)[0];
     if (!firstLayerName) {
-      addLog("No styles to export.", "warning");
+      addLog("no styles to export.", "warning");
       return;
     }
 
@@ -526,25 +526,25 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     try {
       // Use UXP file system API for proper file saving
       const fileName = `chroma-styles-${Date.now()}.css`;
-      
+
       // Get file for saving using UXP file system
       const file = await localFileSystem.getFileForSaving(fileName, {
-        types: ["css"]
+        types: ["css"],
       });
-      
+
       if (!file) {
-        addLog("Export cancelled by user.", "info");
+        addLog("export cancelled by user.", "info");
         return;
       }
 
       // Write the CSS content to the file
       await file.write(finalCss, { format: formats.utf8 });
-      
+
       addLog(`📦 CSS file saved successfully: ${file.name}`, "success");
-      addLog(`📍 Location: ${file.nativePath}`, "info");
+      addLog(`📍 location: ${file.nativePath}`, "info");
     } catch (error) {
-      console.error("Export error:", error);
-      addLog(`Export failed: ${error.message}`, "error");
+      console.error("export error:", error);
+      addLog(`export failed: ${error.message}`, "error");
     }
   };
 
@@ -553,17 +553,17 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
       .map((log) => `[${log.timestamp}] ${log.message}`)
       .join("\n");
     if (consoleText.trim() === "") {
-      addLog("No console messages to copy", "warning");
+      addLog("no console messages to copy", "warning");
       return;
     }
 
     navigator.clipboard
       .writeText(consoleText)
       .then(() => {
-        addLog("Console copied to clipboard!", "success");
+        addLog("console copied to clipboard!", "success");
       })
       .catch((err) => {
-        addLog("Failed to copy console to clipboard", "error");
+        addLog("failed to copy console to clipboard", "error");
       });
   };
 
@@ -583,11 +583,23 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
               <span>📄 styles.css</span>
             </div>
             <div className="css-editor__editor-buttons">
-              <button onClick={handleClearLayers} className="css-editor__button css-editor__button--red">
-                🧹Clear
+              <button
+                onClick={handleClearLayers}
+                className="css-editor__button css-editor__button--red"
+              >
+                🗑️ clear
               </button>
-              <button onClick={handleSave} className="css-editor__button css-editor__button--green">
-                💾 Save
+              <button
+                onClick={handleSave}
+                className="css-editor__button css-editor__button--green"
+              >
+                💾 save
+              </button>
+              <button
+                onClick={handleExport}
+                className="css-editor__button"
+              >
+                ⏏
               </button>
             </div>
           </div>
@@ -653,58 +665,48 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
       <div className="css-editor__ai-section">
         <div className="css-editor__ai-content">
-          <div className="css-editor__image-upload-row">
-            <div className="css-editor__image-upload">
-              <button
-                onClick={handleBrowseForImage}
-                className="css-editor__upload-button"
-                style={{
-                  width: "100%",
-                  border: "2px dashed #4b5563",
-                  borderRadius: "0.5rem",
-                  background: imagePreview ? "#374151" : "#1f2937",
-                  color: "#9ca3af",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  height: "80px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                }}
-              >
-                {imagePreview ? (
-                  <div className="css-editor__image-preview">
-                    <img src={imagePreview} alt="Inspiration" />
-                    <span>click to change image</span>
-                  </div>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        fontSize: "1.125rem",
-                        transition: "all 1s ease-in-out",
-                      }}
-                    >
-                      📸 browse for inspiration image
-                    </span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="css-editor__extract-button">
-              <button
-                onClick={handleGenerateFromImage}
-                disabled={
-                  isAnalyzingImage || isApiRateLimited || !inspirationImage
-                }
-                className="css-editor__button css-editor__button--blue"
-              >
-                🎨{" "}
-                {isAnalyzingImage ? "analyzing..." : "extract style"}
-              </button>
-            </div>
+          <div className="css-editor__ai-input-group">
+            <button
+              onClick={handleBrowseForImage}
+              className="css-editor__upload-button"
+              style={{
+                border: "2px dashed #4b5563",
+                borderRadius: "0.5rem",
+                background: imagePreview ? "#374151" : "#1f2937",
+                color: "#9ca3af",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                height: "80px",
+              }}
+            >
+              {imagePreview ? (
+                <div className="css-editor__image-preview">
+                  <img src={imagePreview} alt="Inspiration" />
+                  <span>click to change image</span>
+                </div>
+              ) : (
+                <>
+                  <span
+                    style={{
+                      fontSize: "1.125rem",
+                      transition: "all 1s ease-in-out",
+                    }}
+                  >
+                    📸 browse for inspiration image
+                  </span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleGenerateFromImage}
+              disabled={
+                isAnalyzingImage || isApiRateLimited || !inspirationImage
+              }
+              className="css-editor__button css-editor__button--blue"
+            >
+              🎨 {isAnalyzingImage ? "analyzing..." : "extract style"}
+            </button>
           </div>
         </div>
       </div>
@@ -719,12 +721,6 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
           >
             chroma • CSS for photoshop ™
           </span>
-          <button
-            onClick={handleExport}
-            className="css-editor__button css-editor__button--blue"
-          >
-            📦 export for web
-          </button>
         </div>
       </div>
     </div>

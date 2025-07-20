@@ -68,7 +68,7 @@ const CSSEditor = ({
           {errorCount > 0 && (
             <span className="css-editor-error-count">
               {" "}
-              • {errorCount} errors—invalid CSS
+              • {errorCount} error(s) — invalid CSS
             </span>
           )}
           {warningCount > 0 && (
@@ -105,8 +105,7 @@ const CSSEditor = ({
         {lintMessages.length > 0 && (
           <div className="css-editor-lint-panel">
             <div className="css-editor-lint-header">
-              <span className="css-editor-icon">🔍</span>
-              <span>Lint Issues</span>
+              <span style={{fontSize: "0.75rem"}}>🔍 lint issues:</span>
             </div>
             <div className="css-editor-lint-messages">
               {lintMessages.map((message, index) => (
@@ -125,7 +124,7 @@ const CSSEditor = ({
                   }}
                 >
                   <span className="css-editor-lint-line">
-                    Line {message.line}:
+                    line {message.line}:
                   </span>
                   <span className="css-editor-lint-text">
                     {message.message}

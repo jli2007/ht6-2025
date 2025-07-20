@@ -7,6 +7,13 @@
   overflow: hidden;
 }
 
+.css-editor__editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .css-editor-header {
   display: flex;
   align-items: center;
@@ -14,10 +21,6 @@
   padding: 0.75rem 1rem;
   background-color: #2d2d30;
   border-bottom: 1px solid #3e3e42;
-}
-
-.css-editor-icon {
-  font-size: 1rem;
 }
 
 .css-editor-status {
@@ -82,7 +85,7 @@
   line-height: 40px !important;
 }
 
-.css-editor-textarea{
+.css-editor-textarea {
   cursor: text !important;
 }
 
@@ -98,7 +101,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0rem 1rem;
+  margin: 0.5rem 0.5rem;
   background-color: #3e3e42;
   font-size: 0.875rem;
   font-weight: 600;
