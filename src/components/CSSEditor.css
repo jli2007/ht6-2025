@@ -16,15 +16,6 @@
   border-bottom: 1px solid #3e3e42;
 }
 
-.css-editor-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #cccccc;
-}
-
 .css-editor-icon {
   font-size: 1rem;
 }
@@ -87,6 +78,12 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  font-size: 24px !important;
+  line-height: 40px !important;
+}
+
+.css-editor-textarea{
+  cursor: text !important;
 }
 
 /* Lint Panel */
