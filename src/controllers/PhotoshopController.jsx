@@ -1,6 +1,6 @@
 /**
  * CONTROLLER for handling CSS-to-Photoshop operations
- * Manages communication between React UI and ExtendScript
+ * Manages communication between React UI and Photoshop
  */
 
 const { app, core, action } = require("photoshop");
@@ -17,85 +17,7 @@ class PhotoshopController {
    * Initialize the controller
    */
   init() {
-    this.setupUXPCommunication();
     this.checkPhotoshopConnection();
-  }
-
-  /**
-   * Setup UXP communication channels
-   */
-  setupUXPCommunication() {
-    // Listen for messages from ExtendScript
-    if (typeof window !== "undefined" && window.postMessage) {
-      window.addEventListener("message", (event) => {
-        this.handleExtendScriptMessage(event.data);
-      });
-    }
-  }
-
-  /**
-   * Get all available layer names for debugging
-   */
-  async getAllLayerNames() {
-    try {
-      if (typeof app === "undefined" || !app.activeDocument) {
-        return [];
-      }
-
-      const doc = app.activeDocument;
-      const layerNames = [];
-
-      // Get all layers recursively
-      const getAllLayers = (layers) => {
-        for (let i = 0; i < layers.length; i++) {
-          const layer = layers[i];
-          layerNames.push(layer.name);
-
-          // If it's a group, get its layers too
-          if (layer.layers) {
-            getAllLayers(layer.layers);
-          }
-        }
-      };
-
-      getAllLayers(doc.layers);
-      console.log("Available layers:", layerNames);
-      return layerNames;
-    } catch (error) {
-      console.error("Failed to get layer names:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Ensure we have an active layer selected
-   */
-  async ensureActiveLayer() {
-    try {
-      if (typeof app === "undefined" || !app.activeDocument) {
-        return false;
-      }
-
-      const doc = app.activeDocument;
-
-      // If there's already an active layer, we're good
-      if (doc.activeLayer) {
-        console.log("Active layer already set:", doc.activeLayer.name);
-        return true;
-      }
-
-      // If no active layer but we have layers, set the first one as active
-      if (doc.layers && doc.layers.length > 0) {
-        doc.activeLayer = doc.layers[0];
-        console.log("Set active layer to:", doc.layers[0].name);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error("Failed to ensure active layer:", error);
-      return false;
-    }
   }
 
   /**
@@ -274,66 +196,6 @@ class PhotoshopController {
   }
 
   /**
-   * Parse shadow value (e.g., "#000 5px 5px 10px")
-   */
-  parseShadowValue(value) {
-    const parts = value.toString().split(" ");
-    return {
-      color: parts[0] || "#000000",
-      x: parseFloat(parts[1]) || 0,
-      y: parseFloat(parts[2]) || 0,
-      blur: parseFloat(parts[3]) || 0,
-    };
-  }
-
-  /**
-   * Parse glow value (e.g., "#FFF 15px")
-   */
-  parseGlowValue(value) {
-    const parts = value.toString().split(" ");
-    return {
-      color: parts[0] || "#FFFFFF",
-      size: parseFloat(parts[1]) || 10,
-    };
-  }
-
-  /**
-   * Parse stroke value (e.g., "3px outside #FFF")
-   */
-  parseStrokeValue(value) {
-    const parts = value.toString().split(" ");
-    return {
-      size: parseFloat(parts[0]) || 1,
-      position: parts[1] || "outside",
-      color: parts[2] || "#000000",
-    };
-  }
-
-  /**
-   * Parse color overlay value (e.g., "#A52A2A 50%")
-   */
-  parseColorOverlayValue(value) {
-    const parts = value.toString().split(" ");
-    return {
-      color: parts[0] || "#000000",
-      opacity: parseFloat(parts[1]) || 100,
-    };
-  }
-
-  /**
-   * Parse gradient overlay value (e.g., "linear 90deg #F00 #00F")
-   */
-  parseGradientOverlayValue(value) {
-    const parts = value.toString().split(" ");
-    return {
-      type: parts[0] || "linear",
-      angle: parseFloat(parts[1]) || 0,
-      color1: parts[2] || "#FF0000",
-      color2: parts[3] || "#0000FF",
-    };
-  }
-
-  /**
    * Parse standard CSS filter property and convert to our operations
    */
   parseCSSFilter(layerName, filterValue) {
@@ -488,38 +350,6 @@ class PhotoshopController {
         hue: clamp(value * 0.5, -90, 90), // Convert tint to hue shift
         saturation: 0,
         lightness: 0,
-      }),
-
-      // Layer Effects
-      "drop-shadow": () => ({
-        type: "dropShadow",
-        layerName,
-        ...this.parseShadowValue(value),
-      }),
-      "inner-shadow": () => ({
-        type: "innerShadow",
-        layerName,
-        ...this.parseShadowValue(value),
-      }),
-      "outer-glow": () => ({
-        type: "outerGlow",
-        layerName,
-        ...this.parseGlowValue(value),
-      }),
-      stroke: () => ({
-        type: "stroke",
-        layerName,
-        ...this.parseStrokeValue(value),
-      }),
-      "color-overlay": () => ({
-        type: "colorOverlay",
-        layerName,
-        ...this.parseColorOverlayValue(value),
-      }),
-      "gradient-overlay": () => ({
-        type: "gradientOverlay",
-        layerName,
-        ...this.parseGradientOverlayValue(value),
       }),
 
       // Filters & Textures
@@ -797,14 +627,6 @@ class PhotoshopController {
                       }
                       break;
 
-                    case "exposure":
-                      // Exposure is now handled as brightness/contrast
-                      this.emit("log", {
-                        message: `⚠️ Exposure converted to brightness adjustment for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
                     case "vibrance":
                       await action.batchPlay(
                         [
@@ -828,22 +650,6 @@ class PhotoshopController {
                       successfulOperations++;
                       break;
 
-                    case "temperature":
-                      // Temperature is now handled as hue/saturation
-                      this.emit("log", {
-                        message: `⚠️ Temperature converted to hue adjustment for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "tint":
-                      // Tint is now handled as hue/saturation
-                      this.emit("log", {
-                        message: `⚠️ Tint converted to hue adjustment for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
                     case "gaussianBlur":
                       await action.batchPlay(
                         [
@@ -861,48 +667,6 @@ class PhotoshopController {
                         type: "success",
                       });
                       successfulOperations++;
-                      break;
-
-                    case "dropShadow":
-                      this.emit("log", {
-                        message: `⚠️ Drop shadow not supported for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "innerShadow":
-                      this.emit("log", {
-                        message: `⚠️ Inner shadow not supported for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "outerGlow":
-                      this.emit("log", {
-                        message: `⚠️ Outer glow not supported for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "stroke":
-                      this.emit("log", {
-                        message: `⚠️ Stroke not supported for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "colorOverlay":
-                      this.emit("log", {
-                        message: `⚠️ Color overlay not supported for ${layerName}`,
-                        type: "warning",
-                      });
-                      break;
-
-                    case "gradientOverlay":
-                      this.emit("log", {
-                        message: `⚠️ Gradient overlay not supported for ${layerName}`,
-                        type: "warning",
-                      });
                       break;
 
                     case "sharpen":
@@ -941,14 +705,6 @@ class PhotoshopController {
                         type: "success",
                       });
                       successfulOperations++;
-                      break;
-
-                    case "vignette":
-                      // Vignette is now handled as brightness/contrast
-                      this.emit("log", {
-                        message: `⚠️ Vignette converted to brightness/contrast adjustment for ${layerName}`,
-                        type: "warning",
-                      });
                       break;
 
                     default:
@@ -1013,198 +769,6 @@ class PhotoshopController {
   }
 
   /**
-   * Consolidate operations to combine similar adjustment types and avoid duplicates
-   */
-  consolidateOperations(operations) {
-    const consolidated = [];
-    const adjustmentMap = new Map();
-
-    operations.forEach((op) => {
-      switch (op.type) {
-        case "hueAdjustment":
-          if (!adjustmentMap.has("hueAdjustment")) {
-            adjustmentMap.set("hueAdjustment", {
-              type: "hueAdjustment",
-              layerName: op.layerName,
-              hue: 0,
-              saturation: 0,
-            });
-          }
-          const hueAdj = adjustmentMap.get("hueAdjustment");
-          hueAdj.hue += op.hue || 0;
-          hueAdj.saturation += op.saturation || 0;
-          break;
-
-        case "brightnessContrast":
-          if (!adjustmentMap.has("brightnessContrast")) {
-            adjustmentMap.set("brightnessContrast", {
-              type: "brightnessContrast",
-              layerName: op.layerName,
-              brightness: 0,
-              contrast: 0,
-            });
-          }
-          const bcAdj = adjustmentMap.get("brightnessContrast");
-          bcAdj.brightness += op.brightness || 0;
-          bcAdj.contrast += op.contrast || 0;
-          break;
-
-        default:
-          // For blur, opacity and other operations, just add them directly
-          consolidated.push(op);
-      }
-    });
-
-    // Add consolidated adjustments
-    adjustmentMap.forEach((adj) => {
-      consolidated.push(adj);
-    });
-
-    return consolidated;
-  }
-
-  /**
-   * Clear all applied adjustments
-   */
-  async clearAllAdjustments() {
-    try {
-      await core.executeAsModal(
-        async () => {
-          const doc = app.activeDocument;
-
-          for (const [
-            key,
-            adjustmentIds,
-          ] of this.appliedAdjustments.entries()) {
-            for (const adjustmentId of adjustmentIds) {
-              try {
-                const adjLayer = doc.layers.find((l) => l.id === adjustmentId);
-                if (adjLayer) {
-                  await adjLayer.delete();
-                }
-              } catch (e) {
-                console.warn("Failed to remove adjustment layer:", e);
-              }
-            }
-          }
-
-          this.appliedAdjustments.clear();
-        },
-        { commandName: "Clear All CSS Adjustments" }
-      );
-    } catch (e) {
-      console.error("Error clearing adjustments:", e);
-      throw e;
-    }
-  }
-
-  /**
-   * Clear all smart filters from the current layer
-   */
-  async clearAllSmartFilters() {
-    try {
-      await core.executeAsModal(
-        async () => {
-          const doc = app.activeDocument;
-          if (!doc || !doc.activeLayer) {
-            throw new Error("No active layer found");
-          }
-
-          const layer = doc.activeLayer;
-
-          // Simple approach: just clear any adjustment layers above the current layer
-          const layerIndex = doc.layers.indexOf(layer);
-          if (layerIndex > 0) {
-            // Check layers above the current layer for adjustment layers
-            for (let i = layerIndex - 1; i >= 0; i--) {
-              const aboveLayer = doc.layers[i];
-              try {
-                // Check if it's an adjustment layer or has adjustment-like properties
-                if (
-                  aboveLayer.kind === "adjustmentLayer" ||
-                  aboveLayer.name.includes("Brightness/Contrast") ||
-                  aboveLayer.name.includes("Hue/Saturation") ||
-                  aboveLayer.name.includes("Add Noise") ||
-                  aboveLayer.name.includes("Gaussian Blur") ||
-                  aboveLayer.name.includes("Vibrance") ||
-                  aboveLayer.name.includes("Exposure")
-                ) {
-                  await aboveLayer.delete();
-                }
-              } catch (e) {
-                console.warn("Failed to remove adjustment layer:", e);
-                // Continue with other layers
-              }
-            }
-          }
-        },
-        { commandName: "Clear All Smart Filters" }
-      );
-    } catch (e) {
-      console.error("Error clearing smart filters:", e);
-      throw e;
-    }
-  }
-
-  /**
-   * Generate ExtendScript for a specific layer
-   */
-  generateLayerScript(layerName, operations) {
-    let script = `
-        // Operations for layer: ${layerName}
-        try {
-            var layer = doc.layers.getByName("${layerName}");
-            doc.activeLayer = layer;
-        } catch (e) {
-            var layer = doc.artLayers.add();
-            layer.name = "${layerName}";
-            doc.activeLayer = layer;
-        }
-        
-        `;
-
-    operations.forEach((op) => {
-      script += this.generateOperationScript(op);
-    });
-
-    return script;
-  }
-
-  /**
-   * Generate ExtendScript for individual operation
-   */
-  generateOperationScript(operation) {
-    switch (operation.type) {
-      case "gaussianBlur":
-        return `doc.activeLayer.applyGaussianBlur(${operation.radius});\n`;
-
-      case "opacity":
-        return `doc.activeLayer.opacity = ${operation.value};\n`;
-
-      case "hueAdjustment":
-        return `doc.activeLayer.applyHueSaturation(${operation.hue || 0}, ${
-          operation.saturation || 0
-        }, 0);\n`;
-
-      case "brightnessContrast":
-        return `doc.activeLayer.applyBrightnessContrast(${
-          operation.brightness || 0
-        }, ${operation.contrast || 0});\n`;
-
-      default:
-        return `// Unknown operation: ${operation.type}\n`;
-    }
-  }
-
-  /**
-   * Handle messages from ExtendScript
-   */
-  handleExtendScriptMessage(message) {
-    const { type, data } = message;
-    this.emit(type, data);
-  }
-
-  /**
    * Event system
    */
   on(event, callback) {
@@ -1234,16 +798,6 @@ class PhotoshopController {
         }
       });
     }
-  }
-
-  /**
-   * Get connection status
-   */
-  getConnectionStatus() {
-    return {
-      connected: this.isConnected,
-      hasDocument: this.isConnected && app.documents.length > 0,
-    };
   }
 }
 

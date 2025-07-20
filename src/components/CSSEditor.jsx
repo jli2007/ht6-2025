@@ -61,8 +61,6 @@ const CSSEditor = ({ value, onChange, placeholder = "Enter your CSS styles here.
     <div className="css-editor-container">
       <div className="css-editor-header">
         <div className="css-editor-title">
-          <span className="css-editor-icon">📄</span>
-          <span>styles.css</span>
         </div>
         <div className="css-editor-status">
           {errorCount > 0 && (

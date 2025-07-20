@@ -26,9 +26,7 @@ export const Terminal = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   
-  // New state for the export modal
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [exportedCss, setExportedCss] = useState("");
+
 
   // --- NEW: State for API Rate Limiting ---
   const [isApiRateLimited, setIsApiRateLimited] = useState(false);
@@ -167,6 +165,7 @@ export const Terminal = () => {
          console.log('Base64 starts with:', base64String.substring(0, 50));
          console.log('MIME type:', mimeType);
          
+         console.log('Setting image preview:', dataUrl.substring(0, 100) + '...');
          setImagePreview(dataUrl);
          setInspirationImage({ data: base64String, mimeType: mimeType, name: imageFile.name });
 
@@ -475,18 +474,22 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     if (styles.opacity) opacity = parseFloat(styles.opacity) / 100;
 
     const finalCss = `.styled-image {\n  filter: ${filterProperties.join(' ')};\n  opacity: ${opacity};\n}`;
-    setExportedCss(finalCss);
-    setShowExportModal(true);
-    addLog("📦 Exported style to Web CSS", "success");
+    
+    // Create and download the CSS file
+    const blob = new Blob([finalCss], { type: 'text/css' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chroma-styles-${Date.now()}.css`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    addLog("📦 CSS file downloaded successfully", "success");
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(exportedCss).then(() => {
-      addLog("Copied to clipboard!", "success");
-    }).catch(err => {
-      addLog("Failed to copy to clipboard", "error");
-    });
-  };
+
 
   const copyConsoleToClipboard = () => {
     const consoleText = logs.map(log => `[${log.timestamp}] ${log.message}`).join('\n');
@@ -502,103 +505,25 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     });
   };
 
+  // Debug: Log imagePreview state
+  console.log('Current imagePreview state:', imagePreview ? 'Has preview' : 'No preview');
+  
   return (
     <div className="css-editor">
-      {/* Export Modal */}
-      {showExportModal && (
-        <div className="css-editor__modal-backdrop" onClick={() => setShowExportModal(false)}>
-          <div className="css-editor__modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Export to Web CSS</h3>
-            <p>Use this CSS code to apply a similar style to an image on a website.</p>
-            <textarea readOnly value={exportedCss} className="css-editor__textarea css-editor__textarea--modal"></textarea>
-            <div className="css-editor__modal-actions">
-              <button onClick={copyToClipboard} className="css-editor__button css-editor__button--blue">Copy to Clipboard</button>
-              <button onClick={() => setShowExportModal(false)} className="css-editor__button">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="css-editor__header">
-        <div className="css-editor__header-left">
-          <img
-            src={Chroma}
-            alt="logo"
-            style={{ width: "15vw", height: "auto" }}
-          />
-        </div>
-        <div className="css-editor__header-right">
-          <button onClick={handleExport} className="css-editor__button css-editor__button--blue">📦 Export for Web</button>
-          <button onClick={handleSave} className="css-editor__button css-editor__button--green">💾 Save (Ctrl+S)</button>
-        </div>
-      </div>
 
-      {/* AI Generation Sections */}
-      <div className="css-editor__ai-section">
-        <div className="css-editor__ai-header">
-          <span className="css-editor__icon css-editor__icon--purple">✨</span>
-          <h3>Gemini CSS Generation</h3>
-        </div>
-        <div className="css-editor__ai-content">
-          <div className="css-editor__ai-input-group">
-            <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Describe the look you want (e.g., 'vintage 70s film')" className="css-editor__text-input" />
-            <button onClick={handleGenerateFromText} disabled={isGenerating || isApiRateLimited || !prompt.trim()} className="css-editor__button css-editor__button--purple">
-              ✨ {isGenerating ? "Generating..." : "Generate CSS"}
-            </button>
-          </div>
 
-        </div>
-      </div>
-      
-      <div className="css-editor__ai-section">
-        <div className="css-editor__ai-header">
-          <span className="css-editor__icon css-editor__icon--blue">🎨</span>
-          <h3>Inspiration Image Analysis</h3>
-        </div>
-        <div className="css-editor__ai-content">
-          <div className="css-editor__image-upload">
-            <button
-              onClick={handleBrowseForImage}
-              className="css-editor__upload-button"
-              style={{ 
-                width: '100%', 
-                padding: '1.5rem',
-                border: '2px dashed #4b5563',
-                borderRadius: '0.5rem',
-                background: imagePreview ? '#374151' : '#1f2937',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem'
-              }}
-            >
-              {imagePreview ? (
-                <div className="css-editor__image-preview">
-                  <img src={imagePreview} alt="Inspiration" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '0.25rem' }} />
-                  <span style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>Click to change image</span>
-                </div>
-              ) : (
-                <>
-                  <span style={{ fontSize: '1.125rem' }}>📸 Browse for Inspiration Image</span>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Uses native file picker</span>
-                </>
-              )}
-            </button>
-          </div>
-          <div className="css-editor__ai-input-group">
-            <button onClick={handleGenerateFromImage} disabled={isAnalyzingImage || isApiRateLimited || !inspirationImage} className="css-editor__button css-editor__button--blue">
-              🎨 {isAnalyzingImage ? "Analyzing..." : "Extract Style & Generate CSS"}
-            </button>
-          </div>
-        </div>
-      </div>
-
+      {/* Main CSS Editor - Front and Center */}
       <div className="css-editor__main">
         <div className="css-editor__editor">
+          <div className="css-editor__editor-header">
+            <div className="css-editor__editor-title">
+              <span className="css-editor__icon">📄</span>
+              <span>styles.css</span>
+            </div>
+            <button onClick={handleSave} className="css-editor__button css-editor__button--green">
+              💾 Save (Ctrl+S)
+            </button>
+          </div>
           <CSSEditor 
             value={cssCode}
             onChange={setCssCode}
@@ -629,9 +554,77 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         </div>
       </div>
 
-      {/* Status bar */}
-      <div className="css-editor__status-bar">
-        Ready • Press Ctrl+S to save and update Photoshop
+      {/* AI Generation Tools - Secondary Section */}
+      <div className="css-editor__ai-section">
+        <div className="css-editor__ai-content">
+          <div className="css-editor__ai-input-group">
+            <input type="text" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Describe the look you want (e.g., 'vintage 70s film')" className="css-editor__text-input" />
+            <button onClick={handleGenerateFromText} disabled={isGenerating || isApiRateLimited || !prompt.trim()} className="css-editor__button css-editor__button--purple">
+              ✨ {isGenerating ? "Generating..." : "Generate CSS"}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="css-editor__ai-section">
+        <div className="css-editor__ai-content">
+          <div className="css-editor__image-upload-row">
+            <div className="css-editor__image-upload">
+              <button
+                onClick={handleBrowseForImage}
+                className="css-editor__upload-button"
+                style={{ 
+                  width: '100%', 
+                  padding: imagePreview ? '0.75rem' : '1rem',
+                  border: '2px dashed #4b5563',
+                  borderRadius: '0.5rem',
+                  background: imagePreview ? '#374151' : '#1f2937',
+                  color: '#9ca3af',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  minHeight: imagePreview ? '140px' : '80px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {imagePreview ? (
+                  <div className="css-editor__image-preview">
+                    <img src={imagePreview} alt="Inspiration" />
+                    <span>Click to change image</span>
+                  </div>
+                ) : (
+                  <>
+                    <span style={{ fontSize: '1.125rem' }}>📸 Browse for Inspiration Image</span>
+                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Uses native file picker</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="css-editor__extract-button">
+              <button onClick={handleGenerateFromImage} disabled={isAnalyzingImage || isApiRateLimited || !inspirationImage} className="css-editor__button css-editor__button--blue">
+                🎨 {isAnalyzingImage ? "Analyzing..." : "Extract Style & Generate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer with Logo and Export */}
+      <div className="css-editor__footer">
+        <div className="css-editor__footer-content">
+          <img
+            src={Chroma}
+            alt="Chroma"
+            className="css-editor__footer-logo"
+          />
+          <span className="css-editor__footer-text">Ready • Press Ctrl+S to save and update Photoshop</span>
+          <button onClick={handleExport} className="css-editor__button css-editor__button--blue">
+            📦 Export for Web
+          </button>
+        </div>
       </div>
     </div>
   );
