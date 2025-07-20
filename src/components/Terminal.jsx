@@ -13,12 +13,12 @@ export const Terminal = () => {
   console.log('Terminal component rendering...');
 
   const [cssCode, setCssCode] = useState(`#layer1 {
-  blur: 0px;
-  opacity: 1.0;
-  hue-shift: 0deg;
-  brightness: 0;
-  contrast: 0;
-  saturation: 0;
+  blur: 10px;
+  opacity: 0.9;
+  hue-shift: 10deg;
+  brightness: 10;
+  contrast: 10;
+  saturation: 10;
 }`);
 
   // Image upload state

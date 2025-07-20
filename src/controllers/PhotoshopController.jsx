@@ -246,7 +246,12 @@ class PhotoshopController {
       const numericValue = parseFloat(value);
       if (!isNaN(numericValue)) {
         // If it's a decimal between 0-1 and no units, convert to percentage
-        if (numericValue >= 0 && numericValue <= 1 && !value.includes("px") && !value.includes("deg")) {
+        if (
+          numericValue >= 0 &&
+          numericValue <= 1 &&
+          !value.includes("px") &&
+          !value.includes("deg")
+        ) {
           return numericValue * 100; // Convert 0.1 to 10
         }
         return numericValue;
@@ -622,7 +627,7 @@ class PhotoshopController {
   /**
    * Apply CSS operations to Photoshop
    */
-  async applyCSSOperations(cssText, vibeMode = false) {
+  async applyCSSOperations(cssText) {
     console.log("Parsing CSS text:", cssText);
     const operations = this.parseCSSToOperations(cssText);
     if (!operations.length) {
@@ -665,10 +670,7 @@ class PhotoshopController {
                 });
               }
 
-              // Reset previous adjustments for this layer only if not in vibe mode
-              if (!vibeMode) {
-                await this.resetLayerAdjustments(doc, layerName);
-              }
+              await this.resetLayerAdjustments(doc, layerName);
 
               // Track applied adjustment layer IDs for this layer
               const appliedIds = [];
@@ -722,37 +724,43 @@ class PhotoshopController {
                         { synchronousExecution: false }
                       );
 
-                      const hueAdjLayer = doc.activeLayer;
-                      appliedIds.push(hueAdjLayer.id);
-
-                      // Move adjustment layer directly above target layer
-                      await hueAdjLayer.move(targetLayer, "placeBefore");
-
-                      // Set as active and clip to layer below
-                      doc.activeLayer = hueAdjLayer;
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "groupEvent",
-                            _target: [
-                              {
-                                _ref: "layer",
-                                _enum: "ordinal",
-                                _value: "targetEnum",
-                              },
-                            ],
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
+                      const hueAdjLayer = doc.layers.find(
+                        (layer) =>
+                          layer.kind === "adjustmentLayer" &&
+                          layer.name.includes("Hue/Saturation")
                       );
+                      if (hueAdjLayer) {
+                        appliedIds.push(hueAdjLayer.id);
 
-                      this.emit("log", {
-                        message: `✓ Applied hue/saturation adjustment to ${layerName}`,
-                        type: "success",
-                      });
-                      successfulOperations++;
-                      break;
+                        // Move adjustment layer directly above target layer
+                        await hueAdjLayer.move(targetLayer, "placeBefore");
+
+                        // Set as active and clip to layer below
+                        doc.activeLayer = hueAdjLayer;
+                        await action.batchPlay(
+                          [
+                            {
+                              _obj: "groupEvent",
+                              _target: [
+                                {
+                                  _ref: "layer",
+                                  _enum: "ordinal",
+                                  _value: "targetEnum",
+                                },
+                              ],
+                              _options: { dialogOptions: "dontDisplay" },
+                            },
+                          ],
+                          { synchronousExecution: false }
+                        );
+
+                        this.emit("log", {
+                          message: `✓ Applied hue/saturation adjustment to ${layerName}`,
+                          type: "success",
+                        });
+                        successfulOperations++;
+                        break;
+                      }
 
                     case "brightnessContrast":
                       await action.batchPlay(
@@ -767,15 +775,26 @@ class PhotoshopController {
                         { synchronousExecution: false }
                       );
 
-                      const bcAdjLayer = doc.activeLayer;
-                      appliedIds.push(bcAdjLayer.id);
-                      await bcAdjLayer.move(targetLayer, "placeBefore");
+                      const bcAdjLayer = doc.layers.find(
+                        (layer) =>
+                          layer.kind === "adjustmentLayer" &&
+                          layer.name.includes("Brightness/Contrast")
+                      );
 
-                      this.emit("log", {
-                        message: `✓ Applied brightness/contrast to ${layerName}`,
-                        type: "success",
-                      });
-                      successfulOperations++;
+                      if (bcAdjLayer) {
+                        appliedIds.push(bcAdjLayer.id);
+                        await bcAdjLayer.move(targetLayer, "placeBefore");
+
+                        this.emit("log", {
+                          message: `✓ Applied brightness/contrast to ${layerName}`,
+                          type: "success",
+                        });
+                        successfulOperations++;
+                      } else {
+                        console.warn(
+                          "Could not find created Brightness/Contrast adjustment layer"
+                        );
+                      }
                       break;
 
                     case "exposure":
