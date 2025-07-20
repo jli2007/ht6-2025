@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import photoshopController from "../controllers/PhotoshopController";
 import "./Terminal.css";
 import { Chroma } from "./chroma";
+import CSSEditor from "./CSSEditor.jsx";
 
 // --- UXP File System API ---
 // We need to import the storage module AND the formats enum from UXP
@@ -43,7 +44,6 @@ export const Terminal = () => {
   const [logs, setLogs] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const textareaRef = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [text, setText] = useState("");
 
@@ -194,7 +194,7 @@ export const Terminal = () => {
       return;
     }
 
-    const apiKey = 'AIzaSyBJcjtZ0VtFC-xlYrxcwyzibzsi5kD-b8U';
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       addLog("Gemini API key not configured", "error");
       return;
@@ -212,6 +212,7 @@ export const Terminal = () => {
       }
       addLog(`Targeting layer: #${currentLayerName}`, "info");
       
+      const apiKey = process.env.GEMINI_API_KEY;
       const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       
       const requestBody = {
@@ -288,25 +289,25 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
       return;
     }
 
-    const apiKey = 'AIzaSyBJcjtZ0VtFC-xlYrxcwyzibzsi5kD-b8U';
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       addLog("Gemini API key not configured", "error");
       return;
     }
 
-    setIsGenerating(true);
+        setIsGenerating(true);
     addLog("Generating CSS with Gemini...", "info");
 
     try {
       const currentLayerName = await photoshopController.getCurrentLayerName();
       if (!currentLayerName) {
-         addLog("No active layer found. Please select a layer.", "error");
-         setIsGenerating(false);
-         return;
+        addLog("No active layer found. Please select a layer.", "error");
+        setIsGenerating(false);
+        return;
       }
       addLog(`Targeting layer: #${currentLayerName}`, "info");
-
+      
       const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       
       const requestBody = {
@@ -598,39 +599,11 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
       <div className="css-editor__main">
         <div className="css-editor__editor">
-          <div className="css-editor__editor-header">
-            <span className="css-editor__icon css-editor__icon--gray">📄</span>
-            <span className="css-editor__editor-filename">styles.css</span>
-          </div>
-          <div className="css-editor__editor-content">
-            <div className="textarea-container" style={{ position: 'relative', height: '100%' }}>
-              <textarea
-                id="codeTextarea"
-                ref={textareaRef}
-                value={cssCode}
-                onChange={(e) => setCssCode(e.target.value)}
-                className="code-textarea"
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  height: '100%',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '14px',
-                  lineHeight: '1.6',
-                  padding: '20px',
-                  paddingLeft: '60px',
-                  resize: 'none',
-                  tabSize: 2,
-                  caretColor: '#d4d4d4',
-                  zIndex: 2
-                }}
-                placeholder="Enter your CSS styles here..."
-                spellCheck={false}
-              />
-            </div>
-          </div>
+          <CSSEditor 
+            value={cssCode}
+            onChange={setCssCode}
+            placeholder="Enter your CSS styles here..."
+          />
         </div>
         <div className="css-editor__logs">
           <div className="css-editor__logs-header">
