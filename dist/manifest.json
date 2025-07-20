@@ -12,6 +12,7 @@
   ],
   "requiredPermissions": {
     "allowCodeGenerationFromStrings": true,
+    "localFileSystem": "fullAccess",
     "launchProcess": {
       "schemes": [
         "http",
