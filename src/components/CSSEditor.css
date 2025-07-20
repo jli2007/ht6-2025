@@ -1,0 +1,161 @@
+.css-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1e1e1e;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.css-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background-color: #2d2d30;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.css-editor-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cccccc;
+}
+
+.css-editor-icon {
+  font-size: 1rem;
+}
+
+.css-editor-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.css-editor-error-count {
+  color: #f48771;
+  font-weight: 500;
+}
+
+.css-editor-warning-count {
+  color: #ffcc02;
+  font-weight: 500;
+}
+
+.css-editor-success {
+  color: #89d185;
+  font-weight: 500;
+}
+
+.css-editor-monaco {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Monaco Editor customizations */
+.css-editor-monaco .monaco-editor {
+  background-color: #1e1e1e !important;
+}
+
+.css-editor-monaco .monaco-editor .margin {
+  background-color: #1e1e1e !important;
+}
+
+.css-editor-monaco .monaco-editor .monaco-editor-background {
+  background-color: #1e1e1e !important;
+}
+
+.css-editor-monaco .monaco-editor .scrollbar .slider {
+  background-color: #424242 !important;
+}
+
+.css-editor-monaco .monaco-editor .scrollbar .slider:hover {
+  background-color: #4f4f4f !important;
+}
+
+.css-editor-monaco .monaco-editor .scrollbar .slider.active {
+  background-color: #5a5a5a !important;
+}
+
+/* Main editor layout */
+.css-editor-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Lint Panel */
+.css-editor-lint-panel {
+  background-color: #2d2d30;
+  border-top: 1px solid #3e3e42;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.css-editor-lint-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #3e3e42;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cccccc;
+  border-bottom: 1px solid #4e4e52;
+}
+
+.css-editor-lint-messages {
+  padding: 0.5rem;
+}
+
+.css-editor-lint-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.css-editor-lint-message:hover {
+  background-color: #3e3e42;
+}
+
+.css-editor-lint-message--error {
+  background-color: rgba(244, 135, 113, 0.1);
+  border-left: 3px solid #f48771;
+}
+
+.css-editor-lint-message--warning {
+  background-color: rgba(255, 204, 2, 0.1);
+  border-left: 3px solid #ffcc02;
+}
+
+.css-editor-lint-line {
+  color: #888888;
+  font-weight: 600;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.css-editor-lint-text {
+  color: #cccccc;
+  flex: 1;
+}
+
+.css-editor-lint-message--error .css-editor-lint-text {
+  color: #f48771;
+}
+
+.css-editor-lint-message--warning .css-editor-lint-text {
+  color: #ffcc02;
+}
