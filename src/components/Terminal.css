@@ -102,7 +102,16 @@
 }
 
 .css-editor__button--purple:hover {
-    background-color: #7c3aed;
+  background-color: #7c3aed;
+}
+
+.css-editor__button--red {
+  background-color: #dc2626;
+  color: white;
+}
+
+.css-editor__button--red:hover {
+  background-color: #b91c1c;
 }
 
 .css-editor__button-icon {
@@ -148,6 +157,11 @@
     font-size: 0.875rem;
     font-weight: 600;
     color: #e5e7eb;
+}
+
+.css-editor__editor-buttons {
+    display: flex;
+    gap: 0.5rem;
 }
 
 .css-editor__editor-header {

@@ -358,11 +358,6 @@ class PhotoshopController {
         layerName,
         radius: Math.max(0, value),
       }),
-      sharpen: () => ({
-        type: "sharpen",
-        layerName,
-        value: clamp(value, 0, 100),
-      }),
       noise: () => ({
         type: "noise",
         layerName,
@@ -450,8 +445,272 @@ class PhotoshopController {
       }
     }
 
+    // Enhanced cleanup: Remove any untracked adjustment layers and Smart Filters that might be affecting this layer
+    try {
+      // Get all adjustment layers in the document
+      const allAdjustmentLayers = doc.layers.filter(layer => layer.kind === "adjustmentLayer");
+      
+      for (const adjLayer of allAdjustmentLayers) {
+        // Skip if this is the target layer itself
+        if (adjLayer.id === targetLayerId) {
+          continue;
+        }
+        
+        // Check if this adjustment layer is positioned above our target layer
+        // and might be affecting it (this is a heuristic approach)
+        const targetLayerIndex = doc.layers.indexOf(targetLayer);
+        const adjLayerIndex = doc.layers.indexOf(adjLayer);
+        
+        // If adjustment layer is above target layer, it might be affecting it
+        if (adjLayerIndex < targetLayerIndex) {
+          console.log(
+            `Removing untracked adjustment layer: ${adjLayer.name} (ID: ${adjLayer.id})`
+          );
+          try {
+            await adjLayer.delete();
+          } catch (e) {
+            console.warn(`Failed to remove untracked adjustment layer ${adjLayer.name}:`, e);
+          }
+        }
+      }
+
+      // Also clear Smart Filters from the target layer specifically using filterFX
+      if (targetLayer && (targetLayer.isSmartObject || targetLayer.kind === "smartObject")) {
+        try {
+          console.log(`Clearing Smart Filters from target layer: ${layerName} using filterFX`);
+          
+          // Select the target layer first
+          doc.activeLayer = targetLayer;
+          
+          // Clear Smart Filters using filterFX delete command
+          // Wrap in try-catch to suppress error dialogs but still attempt clearing
+          try {
+            await action.batchPlay([
+              {
+                _obj: "delete",
+                _target: [
+                  {
+                    _ref: "filterFX"
+                  }
+                ],
+                _options: {
+                  dialogOptions: "dontDisplay"
+                }
+              }
+            ], { synchronousExecution: false });
+            
+            console.log(`Cleared Smart Filters from layer: ${layerName}`);
+          } catch (batchPlayError) {
+            // Silently handle the "filter effects not available" error
+            // This prevents the error dialog from showing
+            if (batchPlayError.number === 9 || batchPlayError.number === 8007 || 
+                batchPlayError.message.includes("not currently available")) {
+              console.log(`Layer ${layerName} has no Smart Filters to clear`);
+            } else {
+              console.warn(`Failed to clear Smart Filters from layer ${layerName}:`, batchPlayError);
+            }
+          }
+        } catch (e) {
+          console.warn(`Failed to process layer ${layerName}:`, e);
+        }
+      }
+    } catch (e) {
+      console.warn("Error during enhanced cleanup:", e);
+    }
+
     // Clear the tracking
     this.appliedAdjustments.delete(adjustmentKey);
+  }
+
+  /**
+   * Clear all adjustment layers and smart filters for a fresh start
+   */
+  async clearAllAdjustmentLayers() {
+    try {
+      await core.executeAsModal(
+        async () => {
+          const doc = app.activeDocument;
+          if (!doc) {
+            console.warn("No active document found");
+            return;
+          }
+
+          let totalCleared = 0;
+
+          // Get all adjustment layers
+          const adjustmentLayers = doc.layers.filter(layer => layer.kind === "adjustmentLayer");
+          console.log(`Found ${adjustmentLayers.length} adjustment layers to remove`);
+          
+          // Remove all adjustment layers
+          for (const adjLayer of adjustmentLayers) {
+            try {
+              console.log(`Removing adjustment layer: ${adjLayer.name}`);
+              await adjLayer.delete();
+              totalCleared++;
+            } catch (e) {
+              console.warn(`Failed to remove adjustment layer ${adjLayer.name}:`, e);
+            }
+          }
+
+          // Clear Smart Filters from all layers
+          for (const layer of doc.layers) {
+            try {
+              console.log(`Checking layer: ${layer.name}, type: ${layer.kind}`);
+              
+              // Try different ways to access Smart Filters
+              let smartFilters = [];
+              
+              // Method 1: Direct smartFilters property
+              if (layer.smartFilters) {
+                console.log(`Layer ${layer.name} has smartFilters property:`, layer.smartFilters);
+                smartFilters = layer.smartFilters;
+              }
+              
+              // Method 2: Check if layer is a smart object
+              if (layer.isSmartObject) {
+                console.log(`Layer ${layer.name} is a smart object`);
+                // Smart objects might have different filter access
+                if (layer.smartFilters) {
+                  smartFilters = layer.smartFilters;
+                }
+              }
+              
+              // Method 3: Check for adjustment layers that might be smart filters
+              if (layer.kind === "adjustmentLayer") {
+                console.log(`Layer ${layer.name} is an adjustment layer`);
+                // Some adjustment layers might be smart filters
+                if (layer.smartFilters) {
+                  smartFilters = layer.smartFilters;
+                }
+              }
+              
+              // Method 4: Try to access filters through layer properties
+              if (layer.filters) {
+                console.log(`Layer ${layer.name} has filters property:`, layer.filters);
+                smartFilters = layer.filters;
+              }
+              
+              console.log(`Found ${smartFilters.length} Smart Filters on layer: ${layer.name}`);
+              
+              // Remove all Smart Filters from this layer
+              for (const smartFilter of smartFilters) {
+                try {
+                  console.log(`Removing Smart Filter: ${smartFilter.name || 'unnamed'} from layer: ${layer.name}`);
+                  await smartFilter.delete();
+                  totalCleared++;
+                } catch (e) {
+                  console.warn(`Failed to remove Smart Filter ${smartFilter.name || 'unnamed'}:`, e);
+                }
+              }
+            } catch (e) {
+              console.warn(`Error checking Smart Filters on layer ${layer.name}:`, e);
+            }
+          }
+
+          // Try alternative method: Use batchPlay to clear all Smart Filters
+          try {
+            console.log("Attempting to clear Smart Filters using batchPlay...");
+            
+            // Get all layers that might have Smart Filters
+            const layersWithFilters = doc.layers.filter(layer => 
+              layer.smartFilters || layer.filters || layer.isSmartObject
+            );
+            
+            console.log(`Found ${layersWithFilters.length} layers that might have Smart Filters`);
+            
+            for (const layer of layersWithFilters) {
+              // Try to clear Smart Filters using batchPlay
+              await action.batchPlay([
+                {
+                  _obj: "clearLayerStyle",
+                  _target: [
+                    {
+                      _ref: "layer",
+                      _name: layer.name
+                    }
+                  ],
+                  _options: { dialogOptions: "dontDisplay" }
+                }
+              ], { synchronousExecution: false });
+              
+              console.log(`Cleared layer style for: ${layer.name}`);
+              totalCleared++;
+            }
+          } catch (e) {
+            console.warn("batchPlay clearLayerStyle failed:", e);
+          }
+
+          // Clear Smart Filters using the correct filterFX approach
+          try {
+            console.log("Attempting to clear Smart Filters using filterFX delete command...");
+            
+            // Get all layers that might be Smart Objects
+            const smartObjectLayers = doc.layers.filter(layer => 
+              layer.isSmartObject || layer.kind === "smartObject"
+            );
+            
+            console.log(`Found ${smartObjectLayers.length} Smart Object layers`);
+            
+            for (const layer of smartObjectLayers) {
+              try {
+                // Select the layer first
+                doc.activeLayer = layer;
+                console.log(`Selected layer: ${layer.name}`);
+                
+                // Clear Smart Filters using filterFX delete command
+                // Wrap in try-catch to suppress error dialogs but still attempt clearing
+                try {
+                  await action.batchPlay([
+                    {
+                      _obj: "delete",
+                      _target: [
+                        {
+                          _ref: "filterFX"
+                        }
+                      ],
+                      _options: {
+                        dialogOptions: "dontDisplay"
+                      }
+                    }
+                  ], { synchronousExecution: false });
+                  
+                  console.log(`Cleared Smart Filters from layer: ${layer.name}`);
+                  totalCleared++;
+                } catch (batchPlayError) {
+                  // Silently handle the "filter effects not available" error
+                  // This prevents the error dialog from showing
+                  if (batchPlayError.number === 9 || batchPlayError.number === 8007 || 
+                      batchPlayError.message.includes("not currently available")) {
+                    console.log(`Layer ${layer.name} has no Smart Filters to clear`);
+                  } else {
+                    console.warn(`Failed to clear Smart Filters from layer ${layer.name}:`, batchPlayError);
+                  }
+                }
+              } catch (e) {
+                console.warn(`Failed to process layer ${layer.name}:`, e);
+              }
+            }
+          } catch (e) {
+            console.warn("filterFX delete command failed:", e);
+          }
+
+          // Clear all tracking
+          this.appliedAdjustments.clear();
+          
+          this.emit("log", {
+            message: `🧹 Cleared ${totalCleared} adjustment layers and Smart Filters`,
+            type: "info",
+          });
+        },
+        { commandName: "Clear All Adjustment Layers and Smart Filters" }
+      );
+    } catch (e) {
+      console.error("Error clearing adjustment layers:", e);
+      this.emit("log", {
+        message: `Error clearing layers: ${e.message}`,
+        type: "error",
+      });
+    }
   }
 
   /**
@@ -459,6 +718,10 @@ class PhotoshopController {
    */
   async applyCSSOperations(cssText) {
     console.log("Parsing CSS text:", cssText);
+    
+    // Clear all previous adjustment layers for a fresh start
+    await this.clearAllAdjustmentLayers();
+    
     const operations = this.parseCSSToOperations(cssText);
     if (!operations.length) {
       this.emit("log", {
@@ -669,25 +932,7 @@ class PhotoshopController {
                       successfulOperations++;
                       break;
 
-                    case "sharpen":
-                      await action.batchPlay(
-                        [
-                          {
-                            _obj: "sharpen",
-                            amount: op.value,
-                            _options: { dialogOptions: "dontDisplay" },
-                          },
-                        ],
-                        { synchronousExecution: false }
-                      );
-
-                      this.emit("log", {
-                        message: `✓ Applied sharpen to ${layerName}`,
-                        type: "success",
-                      });
-                      successfulOperations++;
-                      break;
-
+                    
                     case "noise":
                       await action.batchPlay(
                         [

@@ -36,7 +36,7 @@ export const Terminal = () => {
     'opacity', 'blending-mode', 'fill-opacity', 'brightness', 'contrast', 
     'exposure', 'saturation', 'hue-shift', 'vibrance', 'temperature', 'tint',
     'drop-shadow', 'inner-shadow', 'outer-glow', 'stroke', 'color-overlay', 
-    'gradient-overlay', 'blur', 'sharpen', 'noise', 'grain', 'vignette'
+    'gradient-overlay', 'blur', 'noise', 'grain', 'vignette'
   ];
 
   const [logs, setLogs] = useState([]);
@@ -113,6 +113,7 @@ export const Terminal = () => {
   }, [cssCode]);
 
   const handleSave = async () => {
+    addLog("🧹 Clearing previous layers...", "info");
     addLog("Parsing CSS...", "info");
     try {
       console.log("CSS to apply:", cssCode);
@@ -121,6 +122,17 @@ export const Terminal = () => {
       addLog(`✅ Applied ${result.operationsCount} ops`, "success");
     } catch (err) {
       console.error("Save error:", err);
+      addLog(`Error: ${err.message || 'Unknown error occurred'}`, "error");
+    }
+  };
+
+  const handleClearLayers = async () => {
+    addLog("🧹 Clearing all adjustment layers...", "info");
+    try {
+      await photoshopController.clearAllAdjustmentLayers();
+      addLog("✅ All adjustment layers cleared", "success");
+    } catch (err) {
+      console.error("Clear layers error:", err);
       addLog(`Error: ${err.message || 'Unknown error occurred'}`, "error");
     }
   };
@@ -520,9 +532,14 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
               <span className="css-editor__icon">📄</span>
               <span>styles.css</span>
             </div>
-            <button onClick={handleSave} className="css-editor__button css-editor__button--green">
-              💾 Save (Ctrl+S)
-            </button>
+            <div className="css-editor__editor-buttons">
+              <button onClick={handleClearLayers} className="css-editor__button css-editor__button--red">
+                🧹 Clear Layers
+              </button>
+              <button onClick={handleSave} className="css-editor__button css-editor__button--green">
+                💾 Save (Ctrl+S)
+              </button>
+            </div>
           </div>
           <CSSEditor 
             value={cssCode}
