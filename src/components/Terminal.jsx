@@ -40,7 +40,6 @@ export const Terminal = () => {
     'gradient-overlay', 'blur', 'sharpen', 'noise', 'grain', 'vignette'
   ];
 
-  const [isConnected, setIsConnected] = useState(false);
   const [logs, setLogs] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -56,30 +55,24 @@ export const Terminal = () => {
     ]);
   };
 
+  // Helper function to update CSS (always replace)
+  const updateCssCode = (newCss) => {
+    setCssCode(newCss);
+    addLog("✨ Replaced CSS with new styles", "success");
+  };
+
   useEffect(() => {
     // Listen for log events from the controller
     const handleLog = (logData) => {
       addLog(logData.message, logData.type);
     };
 
-    const handleConnectionChange = (data) => {
-      setIsConnected(data.connected);
-      addLog(
-        data.connected
-          ? "Connected to Photoshop via UXP"
-          : "Lost connection to Photoshop",
-        data.connected ? "success" : "error"
-      );
-    };
-
     // Register event listeners
     photoshopController.on("log", handleLog);
-    photoshopController.on("connectionChanged", handleConnectionChange);
 
     // Cleanup listeners on unmount
     return () => {
       photoshopController.off("log", handleLog);
-      photoshopController.off("connectionChanged", handleConnectionChange);
     };
   }, []);
 
@@ -125,7 +118,7 @@ export const Terminal = () => {
     addLog("Parsing CSS...", "info");
     try {
       console.log("CSS to apply:", cssCode);
-      const result = await photoshopController.applyCSSOperations(cssCode);
+      const result = await photoshopController.applyCSSOperations(cssCode, false); // Always use normal mode
       console.log("Apply result:", result);
       addLog(`✅ Applied ${result.operationsCount} ops`, "success");
     } catch (err) {
@@ -273,11 +266,9 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         const cssMatch = generatedText.match(/```css\s*([\s\S]*?)\s*```|(#\w+\s*\{[\s\S]*?\})/);
         if (cssMatch) {
           let extractedCSS = (cssMatch[1] || cssMatch[2]).trim();
-          setCssCode(extractedCSS);
-          addLog("✅ Generated CSS from inspiration image", "success");
+          updateCssCode(extractedCSS);
         } else {
-          setCssCode(generatedText.trim());
-          addLog("✅ Generated CSS (raw response)", "success");
+          updateCssCode(generatedText.trim());
         }
       } else {
         throw new Error('No valid content in Gemini API response');
@@ -436,11 +427,9 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         
         if (cssMatch) {
           let extractedCSS = (cssMatch[1] || cssMatch[2]).trim();
-          setCssCode(extractedCSS);
-          addLog("✅ Generated CSS with Gemini", "success");
+          updateCssCode(extractedCSS);
         } else {
-          setCssCode(generatedText.trim());
-          addLog("✅ Generated CSS (raw response)", "success");
+          updateCssCode(generatedText.trim());
         }
       } else {
         throw new Error('No valid content in Gemini API response');
@@ -456,11 +445,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
 
 
   
-  const connectToPhotoshop = async () => {
-    addLog("Attempting to connect to Photoshop...", "info");
-    const connected = await photoshopController.checkPhotoshopConnection();
-    // Connection change will be handled by the event listener
-  };
+  // Removed connectToPhotoshop function - no longer needed
 
   const handleExport = () => {
     const layers = parseCSSToLayers(cssCode);
@@ -502,6 +487,20 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
     });
   };
 
+  const copyConsoleToClipboard = () => {
+    const consoleText = logs.map(log => `[${log.timestamp}] ${log.message}`).join('\n');
+    if (consoleText.trim() === '') {
+      addLog("No console messages to copy", "warning");
+      return;
+    }
+    
+    navigator.clipboard.writeText(consoleText).then(() => {
+      addLog("Console copied to clipboard!", "success");
+    }).catch(err => {
+      addLog("Failed to copy console to clipboard", "error");
+    });
+  };
+
   return (
     <div className="css-editor">
       {/* Export Modal */}
@@ -527,15 +526,8 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
           />
         </div>
         <div className="css-editor__header-right">
-          <div className={`css-editor__status ${isConnected ? "css-editor__status--connected" : "css-editor__status--disconnected"}`}>
-            {isConnected ? "Connected" : "Disconnected"}
-          </div>
-          {!isConnected && (
-            <button onClick={connectToPhotoshop} className="css-editor__button css-editor__button--blue">Connect</button>
-          )}
           <button onClick={handleExport} className="css-editor__button css-editor__button--blue">📦 Export for Web</button>
           <button onClick={handleSave} className="css-editor__button css-editor__button--green">💾 Save (Ctrl+S)</button>
-          
         </div>
       </div>
 
@@ -552,6 +544,7 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
               ✨ {isGenerating ? "Generating..." : "Generate CSS"}
             </button>
           </div>
+
         </div>
       </div>
       
@@ -642,6 +635,13 @@ Return ONLY the CSS code block for the layer selector #${currentLayerName}. Do n
         <div className="css-editor__logs">
           <div className="css-editor__logs-header">
             <h3 className="css-editor__logs-title">Console</h3>
+            <button 
+              onClick={copyConsoleToClipboard} 
+              className="css-editor__button css-editor__button--small"
+              title="Copy console messages to clipboard"
+            >
+              📋 Copy
+            </button>
           </div>
           <div className="css-editor__logs-content">
             {logs.map((log, index) => (
